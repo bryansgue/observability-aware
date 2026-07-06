@@ -1,0 +1,1278 @@
+\documentclass[lettersize,journal]{IEEEtran}
+\usepackage{amsmath,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{array}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\graphicspath{{../results/}}
+\usepackage{cite}
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{bm}
+\usepackage{cite}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{color}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{siunitx}
+\usepackage{pifont}
+\usepackage{stfloats}
+\usepackage{amsthm}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+\newtheorem{lemma}{Lemma}
+\renewenvironment{proof}{\noindent\textit{Proof.}}{\hfill$\square$\medskip}
+
+% ═══════════════════════ MATH COMMANDS ═══════════════════
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\SOg}{SO(3)}
+\newcommand{\norm}[1]{\left\| #1 \right\|}
+\DeclareMathOperator{\atan}{atan2}
+\DeclareMathOperator{\Tr}{tr}
+\DeclareMathOperator{\Logm}{Log}
+\newcommand{\vect}[1]{\bm{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\dt}{\Delta t}
+\newcommand{\cmark}{\textcolor{black}{\ding{51}}}
+\newcommand{\xmark}{\textcolor{black}{\ding{55}}}
+% Filled from the N=5 trans/active batteries (scripts/batch_{trans,active}.sh).
+\newcommand{\driftPlain}{7}    % plain-EKF hover drift over the transition [%] (7.0+-0.6)
+\newcommand{\driftGated}{3}    % gated-EKF held error over the transition [%] (3.3+-0.8)
+% Filled from the probe sweep (scripts/analyze_probe_sweep.py).
+\newcommand{\probeOptShape}{a lateral tilt}
+\newcommand{\probeOptErr}{2.5}
+\newcommand{\probeFixErr}{8}
+
+\begin{document}
+
+\title{Observability-Aware Virtual Force Sensing and
+Self-Calibration for Quadrotors}
+
+\author{Bryan~S.~Guevara, Jove~Varela-Aldas, Angelica~Carrion,
+and~Tiago~Nacimiento}
+
+\maketitle
+
+% ════════════════════ ABSTRACT ════════════════════
+\begin{abstract}
+Many aerial tasks, such as flying in wind or carrying a payload, require the
+external force on the airframe, yet quadrotors rarely carry a force sensor. We turn
+the onboard IMU into a \emph{virtual force sensor}: the external specific force is
+read directly from the accelerometer residual. The obstacle is calibration, since
+the reading needs the vehicle mass, which is unobservable near hover, where it is
+indistinguishable from a vertical force; a standard extended Kalman filter (EKF)
+then corrupts the mass. We make the sensor \emph{observability-aware and
+self-calibrating}. An online identifiability measure, the Fisher information on the
+mass (its inverse is the Cram\'er--Rao bound), gates the calibration and freezes the
+mass when it cannot be seen; and when the flight is too gentle to recalibrate, the
+controller injects a minimal excitation that the same measure shapes. In simulation
+the sensor reads the external force to about \SI{0.4}{\newton} RMS per axis (per-axis
+correlation \num{0.93} under continuous wind); the gate holds the mass to
+\SI{3}{\percent} in a windy hover where a plain EKF drifts to \SI{7}{\percent}; the
+probe recovers the mass from a wrong prior that hover cannot identify; and feeding
+the sensed force to a model-predictive controller cuts the tracking error by up to
+\SI{80}{\percent} under wind. The sensor degrades gracefully under injected
+accelerometer and thrust errors and runs in real time at \SI{100}{\hertz}.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Virtual sensor, force and wrench estimation, inertial sensing, self-calibration,
+observability, active sensing, Cram\'er--Rao bound, aerial robots.
+\end{IEEEkeywords}
+
+% ════════════════════ INTRODUCTION ════════════════════
+\section{Introduction}\label{sec:intro}
+
+The external force acting on a quadrotor, from wind, a payload, or physical
+contact, governs how it must be flown, yet small aerial platforms rarely carry a
+force or wrench sensor: the payload and power budget favor reusing the sensors
+already on board. The accelerometer offers a route. It measures the
+non-gravitational specific force directly, so once gravity and the commanded
+thrust are removed, what remains is the external specific force. This turns the
+inertial measurement unit (IMU) into a \emph{virtual force sensor}, with no added
+hardware, and the reading is instantaneous: no double-differentiation of position,
+no estimator lag.
+
+The virtual sensor has one calibration parameter, the vehicle mass, which converts
+the measured acceleration into the thrust contribution that must be subtracted.
+The mass is rarely measured online, it is copied from a datasheet or changed by a
+payload, and a few-percent error biases the reading. Worse, the mass is only
+\emph{conditionally identifiable}: in near-hover flight it is indistinguishable
+from a vertical external force, so an estimator that calibrates it unconditionally
+corrupts the very reading it supports. A virtual force sensor for aerial use therefore needs
+to know \emph{when} its calibration is trustworthy and to be able to recalibrate
+itself when it is not. That is the problem we address.
+
+Online parameter identification for aerial robots has been studied with
+maximum-likelihood frameworks~\cite{burri2018system} and with recursive
+regression on inertial signals that recover the mass and inertia under physical
+consistency constraints~\cite{wuest2019online,wensing2017geometric}; these
+methods need excited flight to identify the inertial parameters. External-force
+estimation has a parallel line of work based on momentum
+observers~\cite{tomic2017external,ruggiero2014impedance}, which estimate the
+force on the airframe from the dynamics but are biased by errors in the same
+parameters above. Moving-horizon estimation has been applied to quadrotor system
+identification~\cite{liu2023nonlinear}, building on the constrained-MHE
+theory~\cite{rao2003constrained}; the unmodeled aerodynamics that learned
+residual models capture are themselves an active
+area~\cite{bauersfeld2021neurobem,torrente2021data}. On the control side,
+adaptive and incremental schemes reject disturbances without an explicit force
+estimate~\cite{smeur2016adaptive}, and learning-based adaptive controllers fit a
+disturbance representation online to reject wind in agile
+flight~\cite{oconnell2022neuralfly}. These methods cancel the disturbance but do
+not reason about \emph{when} the underlying parameters are identifiable.
+
+Two themes run through this work. First, the mass is recoverable only under
+sufficient excitation, a persistency-of-excitation condition that classical
+optimal input design addresses by shaping the input to maximize the information
+about the unknown~\cite{mehra1974optimal}. Freezing a parameter update when it is
+not persistently excited is itself classical in adaptive estimation, in the form
+of dead-zone and covariance-management schemes~\cite{smeur2016adaptive}, and
+exciting the input to restore information is classical optimal input
+design~\cite{mehra1974optimal}. Our contribution is not either element alone
+but the signal that drives both: unlike a dead-zone keyed to a generic
+excitation proxy, and unlike a momentum observer that estimates the force without
+quantifying its identifiability, we gate on the closed-form Schur complement, which
+(i) isolates exactly the mass--vertical-force coupling, (ii) is the marginal Fisher
+information on the mass (its inverse is the Cram\'er--Rao bound), and (iii), in its
+dimensionless form $\tilde\sigma$, doubles as the
+controller's trigger to restore observability.
+Second, the external force and the inertial parameters are coupled, so estimating
+them jointly can bias both. The near-hover mass--vertical-force degeneracy we use
+is a known structural fact in aerial estimation; existing methods, to our
+knowledge, do not quantify it online to decide \emph{when} a parameter is
+trustworthy or to \emph{act} so that it becomes observable. In near-hover flight
+the mass and the vertical external force enter the dynamics through the same
+channel and are not jointly observable, so an estimator that updates both
+distributes the error between them. This is the property we exploit.
+
+This paper builds an observability-aware, self-calibrating virtual force sensor.
+The external force enters the accelerometer almost algebraically, so the sensor
+reads it accurately once the mass is calibrated; the mass, by contrast, is only
+conditionally identifiable and is confounded with a vertical force near hover. We
+make the calibration observability-aware on two levels. An extended Kalman filter
+(EKF) monitors an online identifiability measure and freezes the mass calibration
+when the parameter is unobservable, protecting the reading during hover where a
+naive filter drifts. When the mass must be recalibrated but the flight is too
+gentle to reveal it, the model-predictive controller injects a minimal probe that
+restores identifiability and then stops, so the sensor never relies on a parameter
+it cannot see. Fig.~\ref{fig:system} shows the resulting loop and the role of the
+identifiability signal $\tilde\sigma$.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_system.png}
+\caption{Architecture of the self-calibrating virtual force sensor. The EKF outputs
+the external force $\hat{\vect{d}}$, the mass calibration $\hat m$, and the
+identifiability $\tilde\sigma$, which gates the calibration and triggers the active
+probe; the NMPC (application) feeds $\hat{\vect{d}}$ forward.}
+\label{fig:system}
+\end{figure}
+
+The contributions of this work are the following. The bare reading of the external
+specific force from the accelerometer residual is a known momentum/IMU-residual
+technique~\cite{tomic2017external,ruggiero2014impedance,smeur2016adaptive}; our
+contribution is the observability-aware self-calibration layer that makes such a
+virtual force sensor trustworthy on a vehicle whose calibration parameter is only
+conditionally identifiable.
+\begin{itemize}
+\item We characterize the IMU-residual reading as a virtual force sensor that needs
+no added hardware and no differentiation of position; it matches the simulator
+ground truth to about \SI{0.4}{\newton} RMS per axis (a per-axis correlation of
+\num{0.93} under continuous wind), and a
+moving-horizon estimator does not improve on it because the reading is algebraically
+observable.
+\item We give the observability analysis of the sensor's calibration: the mass and
+the vertical external force are not jointly observable in near-hover flight, and we
+derive an online identifiability measure, the Schur complement of the force block
+in the thrust--acceleration regressor Gramian, which is the marginal Fisher
+information on the mass (its inverse is the Cram\'er--Rao bound) and quantifies when
+the calibration is trustworthy.
+\item We make the sensor \emph{self-calibrating}. The EKF gates the mass
+calibration by this measure, freezing it when unobservable so the reading is
+protected during hover; and when the mass must be recalibrated but the flight is
+too gentle, the controller injects a probe to restore identifiability. The same
+$\tilde\sigma$ \emph{shapes} the probe, since maximizing it is the
+most informative excitation, so a single observability scalar governs gating,
+triggering, and excitation design.
+\item As an application, we use the sensor in closed loop: feeding the sensed force
+to a model-predictive controller reduces the tracking error by up to
+\SI{80}{\percent} under wind, demonstrating the virtual sensor in real time at
+\SI{100}{\hertz}.
+\end{itemize}
+
+This is a methodology and feasibility study in software-in-the-loop. We exercise
+the sensor against injected accelerometer bias, scale-factor, and thrust-mismatch
+errors to probe the dominant real-sensor effects, but a full hardware demonstration,
+on a real IMU and thrust map, or on a manipulator whose joint-torque readings give
+the same observability structure, is the natural next step and is deliberately left
+to a dedicated follow-up.
+
+The rest of the paper is organized as follows. Section~\ref{sec:model}
+presents the translational model and the measurement equations.
+Section~\ref{sec:obs} analyzes observability and derives the hover ambiguity and
+the identifiability measure. Section~\ref{sec:mhe} describes the
+observability-aware EKF and its mass gate. Section~\ref{sec:nmpc} presents the
+disturbance-rejecting controller and the active excitation.
+Section~\ref{sec:setup} reports the experimental setup and
+Section~\ref{sec:results} the results. Section~\ref{sec:conclusion} concludes.
+
+% ════════════════════ SYSTEM MODEL ════════════════════
+\section{System Model}\label{sec:model}
+
+We model the quadrotor as a rigid body and estimate only its translational
+motion. The attitude is measured by the onboard estimator and enters the model
+as a known input, which removes the orientation states from the estimator and
+keeps it well-conditioned.
+
+\subsection{Frames and notation}
+Let $\mathcal{F}_W=\{O_W,\vect{x}_W,\vect{y}_W,\vect{z}_W\}$ be the inertial
+world frame and $\mathcal{F}_B=\{O_B,\vect{x}_B,\vect{y}_B,\vect{z}_B\}$ the body
+frame attached to the center of mass (CoM). The position of $\mathcal{F}_B$ with
+respect to $\mathcal{F}_W$ is $\vect{p}\in\R^3$ and its velocity is
+$\vect{v}\in\R^3$. The orientation of $\mathcal{F}_B$ with respect to
+$\mathcal{F}_W$ is the rotation matrix $\mat{R}(\vect{q})\in\SOg$, parameterized
+by the unit quaternion
+$\vect{q}=[q_0,\ \vect{q}_v^{\!\top}]^{\!\top}\in\mathbb{S}^3$, with
+$\mathbb{S}^3\triangleq\{\vect{q}\in\mathbb{H}:\norm{\vect{q}}=1\}$ following the
+convention of~\cite{sola2017quaternion}. The body rate $\vect{\omega}\in\R^3$ is
+the angular velocity of $\mathcal{F}_B$ with respect to $\mathcal{F}_W$ expressed
+in $\mathcal{F}_B$. We write $[\cdot]_\times$ for the skew-symmetric operator
+that maps a vector to the matrix form of the cross product. The thrust acts
+along $\vect{z}_B$, so its direction in $\mathcal{F}_W$ is
+$\vect{a}\triangleq\mat{R}(\vect{q})\,\vect{e}_3$ with
+$\vect{e}_3=[0,0,1]^{\!\top}$.
+
+\subsection{Rigid-body dynamics}
+The quadrotor is a six-degree-of-freedom rigid body actuated by a collective
+thrust $T$ along the body $z$ axis and by an inner-loop body-rate controller. Its
+state is the position $\vect{p}$, velocity $\vect{v}$, attitude $\vect{q}$, and
+body rate $\vect{\omega}\in\R^3$. The dynamics are
+\begin{align}
+\dot{\vect{p}} &= \vect{v}, \label{eq:dp}\\
+\dot{\vect{v}} &= -g\,\vect{e}_3 + \frac{T}{m}\,\mat{R}(\vect{q})\,\vect{e}_3
+                  + \vect{d} - c\,\norm{\vect{v}}\,\vect{v},
+                  \label{eq:dv}\\
+\dot{\vect{q}} &= \tfrac{1}{2}\,\mat{\Omega}(\vect{\omega})\,\vect{q},
+                  \label{eq:dq}\\
+\dot{\vect{\omega}} &= \tfrac{1}{\tau_{rc}}\,(\vect{\omega}_{\text{cmd}}-\vect{\omega}),
+                  \label{eq:dw}
+\end{align}
+where $g$ is the gravitational acceleration, $m\in\R_{>0}$ is the mass, and $c$
+is a quadratic drag coefficient that lumps the dominant unmodeled
+aerodynamics~\cite{sun2022comparative}. The attitude kinematics \eqref{eq:dq} use
+the matrix
+$\mat{\Omega}(\vect{\omega})=\left[\begin{smallmatrix}0 & -\vect{\omega}^{\!\top}\\[2pt] \vect{\omega} & -[\vect{\omega}]_\times\end{smallmatrix}\right]$,
+following the convention of~\cite{sola2017quaternion,sola2018micro}. The body rate follows the
+first-order response \eqref{eq:dw} to the commanded rate
+$\vect{\omega}_{\text{cmd}}$, with time constant $\tau_{rc}$ for the inner-loop
+rate controller, while the collective thrust $T$ is commanded directly. The term
+$\vect{d}\in\R^3$, expressed in $\mathcal{F}_W$, is the \textit{external
+specific force}, the net external force per unit mass acting at the center of
+mass,
+\begin{equation}
+\vect{d}\triangleq \frac{1}{m}\,\vect{f}_e ,
+\label{eq:dfdef}
+\end{equation}
+where $\vect{f}_e\in\R^3$ is the resultant of the forces that the nominal model
+does not represent: aerodynamic effects beyond the drag term, wind, and any
+added payload. Equivalently, $\vect{d}$ is the residual between the true
+acceleration and the acceleration that gravity and thrust predict in
+\eqref{eq:dv}; the experiments set the explicit drag coefficient $c=0$, so $\vect{d}$
+also absorbs the aerodynamic drag. We treat $\vect{d}$ as quasi-static over the
+estimation window in near-hover flight, where the velocity-dependent drag is
+negligible and an added mass and a vertical force become indistinguishable
+(Section~\ref{sec:obs}); under fast flight $\vect{d}$ varies with velocity, which
+the random-walk process model tracks within its bandwidth. Thus $\vect{d}$ is a
+\emph{lumped specific-force residual}: the external force (wind, payload) plus the
+absorbed aerodynamic drag, the former dominating near hover and the latter growing
+with speed. The force estimate is validated against the simulator's external-force
+channel, and the residual drag is what the random-walk bandwidth limits at high
+speed (Section~\ref{sec:results}). The quantities
+estimated online are the mass $m$ and the external force $\vect{d}$, which enter
+the translational dynamics \eqref{eq:dv}; the rate-loop constant $\tau_{rc}$ is a
+nominal known constant of the inner loop, not estimated.
+
+For estimation the attitude is treated as a known input: $\vect{q}$, and hence
+the thrust axis $\vect{a}$, are taken from the accurate onboard estimate, so the
+estimator integrates only the translational dynamics
+\eqref{eq:dp}--\eqref{eq:dv}, with the thrust $T$ as a known input. This avoids the
+quaternion states, with their re-normalization and hemisphere bookkeeping, and
+keeps the estimator well-conditioned over the window.
+
+\subsection{Measurement model}
+The onboard sensors provide several signals at each step: the position and
+velocity from odometry, the attitude $\vect{q}$ and the body rate
+$\vect{\omega}$ from the inertial estimator and the gyroscope, and the specific
+force from the accelerometer. The translational estimator uses two of them and
+treats the attitude as an input. The first is the position--velocity
+measurement
+\begin{equation}
+\vect{y} = [\,\vect{p}^{\!\top},\ \vect{v}^{\!\top}\,]^{\!\top}\in\R^6 ,
+\label{eq:y}
+\end{equation}
+provided by the odometry, which is noisy in the simulator. The second is the
+accelerometer, which measures the specific force in $\mathcal{F}_B$, the
+non-gravitational acceleration sensed by the IMU~\cite{forster2015imu}; rotated into
+$\mathcal{F}_W$ with the measured attitude it reads
+\begin{equation}
+\vect{s} = \mat{R}(\vect{q})\,\vect{a}_{\text{IMU}}
+         = \frac{T}{m}\,\vect{a} + \vect{d} - c\,\norm{\vect{v}}\,\vect{v},
+\label{eq:imu}
+\end{equation}
+the non-gravitational part of \eqref{eq:dv}. The attitude $\vect{q}$ enters as
+the known input through $\vect{a}=\mat{R}(\vect{q})\,\vect{e}_3$ rather than as a
+state to estimate, and the body rate $\vect{\omega}$ is not needed by the
+translational estimator. Because the thrust $T$ and the attitude $\vect{q}$ are
+known, \eqref{eq:imu} is an algebraic measurement of $\vect{d}$: the
+accelerometer residual senses the external force directly, which turns the
+estimator into a virtual force sensor.
+
+% ════════════════════ OBSERVABILITY ════════════════════
+\section{Observability and Excitation}\label{sec:obs}
+
+The accelerometer measurement \eqref{eq:imu} relates the unknowns to known
+signals, so we analyze when the mass and the external force can be recovered
+from it. The drag term is a known function of the measured velocity, so we move
+it to the left-hand side and define the compensated specific force
+$\tilde{\vect{s}}\triangleq\vect{s}+c\,\norm{\vect{v}}\,\vect{v}$. With the
+inverse mass $\beta\triangleq 1/m$, \eqref{eq:imu} becomes
+\begin{equation}
+\tilde{\vect{s}} = T\,\vect{a}\,\beta + \vect{d}
+                 = \mat{\Phi}\,\vect{\varphi},
+\qquad
+\mat{\Phi} = [\,T\vect{a}\ \ \mat{I}_3\,],\quad
+\vect{\varphi}=[\beta,\ \vect{d}^{\!\top}]^{\!\top},
+\label{eq:regressor}
+\end{equation}
+which is linear in the unknown $\vect{\varphi}\in\R^4$ with regressor
+$\mat{\Phi}\in\R^{3\times4}$. The thrust $T$ and the thrust axis $\vect{a}$ are
+known, so identifiability of $\vect{\varphi}$ is the identifiability of
+$(m,\vect{d})$.
+
+The accelerometer is what makes \eqref{eq:regressor} algebraic. Without it, the
+force $\vect{d}$ would enter only through the velocity derivative
+$\dot{\vect{v}}$ in \eqref{eq:dv} and would have to be recovered by
+differentiating the noisy odometry twice, which amplifies noise and adds a
+delay. Reading $\vect{d}$ from the specific force \eqref{eq:imu} removes that
+differentiation and yields an instantaneous algebraic measurement, which is the
+basis of the virtual force sensor and decouples the analysis of $\vect{d}$ from
+the integration of the trajectory.
+
+The estimator augments the position and velocity with the mass and the force.
+The position and velocity are measured by the odometry \eqref{eq:y} at every step,
+so the recoverability of the parameters reduces to the \emph{identifiability} of
+$(m,\vect{d})$ from the accelerometer model \eqref{eq:regressor} accumulated over
+the window, a persistency-of-excitation condition on the regressor rather than a
+full nonlinear observability test of the augmented state. This identifiability
+determines when the mass and the force can be separated, and is what we analyze
+and exploit.
+
+A single sample gives three equations for four unknowns, so $\vect{\varphi}$ is
+recovered only by accumulating samples. Over a window of $N$ samples the
+information is the Gramian $\mat{G}=\sum_{k=1}^{N}\mat{\Phi}_k^{\!\top}\mat{\Phi}_k$,
+which has the block form
+\begin{equation}
+\mat{G}=
+\begin{bmatrix}
+\sum_k T_k^2 & \sum_k T_k\vect{a}_k^{\!\top}\\[2pt]
+\sum_k T_k\vect{a}_k & N\,\mat{I}_3
+\end{bmatrix},
+\label{eq:gramian}
+\end{equation}
+where $\norm{\vect{a}_k}=1$ was used. The force block $N\mat{I}_3$ is always
+nonsingular, so $\vect{d}$ is recovered whenever the window is nonempty. The
+mass enters only through $\beta$, which is identifiable if and only if the Schur
+complement of the force block is positive,
+\begin{equation}
+\sigma \triangleq \sum_k T_k^2 - \tfrac{1}{N}\,\Big\|\textstyle\sum_k T_k\vect{a}_k\Big\|^2 > 0 .
+\label{eq:schur}
+\end{equation}
+The scalar $\sigma$ is the dispersion of the vectors $T_k\vect{a}_k$ about their
+mean; it is zero only when they are identical across the window, which is the
+case at hover. Its dimension is thrust squared (\si{\newton\squared}), so its
+absolute scale grows with the thrust level of the maneuver. To obtain a
+dimensionless, maneuver-comparable measure we normalize it by the thrust energy
+in the window,
+\begin{equation}
+\tilde\sigma \triangleq \frac{\sigma}{\sum_k T_k^2}\in[0,1],
+\label{eq:snorm}
+\end{equation}
+the relative dispersion of the thrust direction: $\tilde\sigma=0$ at hover and
+$\tilde\sigma\!\to\!1$ when the thrust vector is maximally spread. Dividing out
+the absolute thrust level removes the dominant source of the threshold's
+maneuver dependence, so a single $\tilde\sigma_{\min}$ classifies the regime
+across maneuvers far better than the raw $\sigma$, as Section~\ref{sec:results}
+quantifies.
+
+\begin{proposition}\label{prop:hover}
+In stationary level hover, where $\vect{a}_k=\vect{e}_3$ and $T_k=\bar{T}$ are
+constant over the window, the inverse mass $\beta$ is not identifiable
+($\sigma=0$). Equivalently, only the combination $\bar{T}\beta+d_z$ is
+observable, while $\beta$ and the vertical force $d_z$ are not separately
+observable.
+\end{proposition}
+\begin{proof}
+With $\vect{a}_k=\vect{e}_3$ and $T_k=\bar{T}$ we have $\sum_k T_k^2=N\bar{T}^2$
+and $\sum_k T_k\vect{a}_k=N\bar{T}\vect{e}_3$, so
+$\sigma = N\bar{T}^2-\tfrac{1}{N}\,N^2\bar{T}^2 = 0$, and $\beta$ is not
+identifiable by \eqref{eq:schur}. The structure is explicit in
+\eqref{eq:regressor}: the vertical row reads
+$\tilde{s}_z=\bar{T}\beta+d_z$, a single equation in the two unknowns
+$\beta$ and $d_z$, whereas the horizontal rows read
+$\tilde{s}_{x,y}=d_{x,y}$ since $\vect{a}=\vect{e}_3$. Hence $d_x$ and $d_y$ are
+observable while $\beta$ and $d_z$ collapse onto their sum.
+\end{proof}
+
+\begin{remark}
+The ambiguity is confined to the vertical axis and to the pair $(m,d_z)$: a
+mass error and a vertical force produce the same accelerometer residual at
+hover. The horizontal components $d_x$ and $d_y$ remain observable regardless of
+excitation, which is why the external force is recovered in the directions
+where wind dominates.
+\end{remark}
+
+Away from hover the thrust axis tilts and its magnitude varies, so the vectors
+$T_k\vect{a}_k$ disperse and $\sigma>0$; the window is then persistently exciting for
+the mass. Since the Cram\'er--Rao lower bound on
+the mass estimate scales with $\sigma^{-1}$ (derived in \eqref{eq:crb} below), a
+more aggressive trajectory admits a better-conditioned estimate, while the force,
+conditioned by the block
+$N\mat{I}_3$, is read with the same accuracy in every regime. The mass is thus
+observable under motion and degenerate only at hover, which
+Section~\ref{sec:results} confirms by identifying it accurately across the range
+of flight speeds.
+
+The scalar $\sigma$ is therefore an online measure of how well the mass can be
+identified, read directly from the known thrust and attitude over the window with
+no extra sensing. It also has an estimation-theoretic meaning. With accelerometer
+noise of variance $r_s$, the joint Fisher information of $(\beta,\vect{d})$ over
+the window is $\mat{G}/r_s$ with $\mat{G}$ the Gramian \eqref{eq:gramian}. The
+$(1,1)$ block of its inverse is the inverse Schur complement, $[\mat{G}^{-1}]_{11}=1/\sigma$,
+so the \emph{marginal} Fisher information of the inverse mass $\beta$, after
+profiling out the jointly estimated force $\vect{d}$, is $\sigma/r_s$, and the
+Cram\'er--Rao bound on any unbiased estimate is
+\begin{equation}
+\mathrm{var}(\hat\beta)\ \geq\ r_s\,[\mat{G}^{-1}]_{11}\,=\,r_s\,\sigma^{-1},
+\label{eq:crb}
+\end{equation}
+which diverges as $\sigma\to0$ at hover and tightens as the maneuver disperses
+the thrust vector. The bound \eqref{eq:crb} is the batch least-squares CRB under
+zero-mean accelerometer noise of isotropic covariance $r_s\mat{I}_3$ and a
+quasi-static $\vect{d}$ over the window; it is the limit the recursive filter
+approaches under excitation, used here as a relative identifiability measure rather
+than an absolute uncertainty. Equation~\eqref{eq:crb} gives the \emph{raw} scalar $\sigma$ an
+estimation-theoretic meaning: $\sigma/r_s$ is the marginal Fisher information on the
+mass, so $\sigma$ is the inverse Cram\'er--Rao bound (up to the noise variance).
+For \emph{gating} we use its dimensionless normalization $\tilde\sigma$
+\eqref{eq:snorm}, which divides out the thrust level so that a single threshold
+$\tilde\sigma_{\min}$ holds across maneuvers; $\sigma$ carries the information
+content and $\tilde\sigma$ carries the decision. We do not invert \eqref{eq:crb} to
+set $\tilde\sigma_{\min}$ analytically; it is tuned with margin between the hover and
+maneuver values of $\tilde\sigma$ (Section~\ref{sec:results}), and \eqref{eq:crb}
+reports the uncertainty that any admissible threshold tolerates. The estimator uses
+$\tilde\sigma$ to decide when to trust the mass, and the controller of
+Section~\ref{sec:nmpc} uses it to decide when to excite.
+
+Proposition~\ref{prop:hover} has a direct operational reading, summarized in
+Table~\ref{tab:obs}. The external force is recoverable in every regime and is
+recovered by any recursive estimator that uses the accelerometer residual; the
+mass is recoverable only when the
+flight excites it ($\sigma$ large), and is then identified jointly with the
+force. This motivates the two elements of our method: an estimator that trusts
+the mass only when $\sigma$ is large (Section~\ref{sec:mhe}), and a controller
+that creates the excitation when the mass must be identified but the flight is
+too gentle to reveal it (Section~\ref{sec:nmpc}).
+
+\begin{table}[t]
+\centering
+\caption{Observability regimes (Proposition~\ref{prop:hover}). The ``degraded''
+$d_z$ entry is the joint case; with an accurate held mass it is recovered
+(Section~\ref{sec:results}).}
+\label{tab:obs}
+\begin{tabular}{lcc}
+\toprule
+Quantity & Hover & Maneuver \\
+\midrule
+mass $m$        & unobservable ($\sigma\!\approx\!0$)         & observable ($\sigma$ large) \\
+$d_x,\,d_y$     & observable                                  & observable \\
+$d_z$           & degraded ($m$--$d_z$)                       & observable \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ════════════════════ ESTIMATOR ════════════════════
+\section{Observability-Aware Estimation}\label{sec:mhe}
+
+We estimate the translational state and the parameters of
+Section~\ref{sec:model} with an extended Kalman filter (EKF) whose state augments
+the position and velocity with the mass and the external force,
+\begin{equation}
+\vect{x}=[\,\vect{p}^{\!\top},\ \vect{v}^{\!\top},\ m,\ \vect{d}^{\!\top}\,]^{\!\top}\in\R^{10}.
+\label{eq:state}
+\end{equation}
+The known inputs at each step are the thrust $T$ and the thrust axis $\vect{a}$.
+The position and velocity follow \eqref{eq:dp}--\eqref{eq:dv}, while the mass and
+the external force have no dynamics of their own and evolve as random walks with
+diagonal process covariance $\mat{Q}=\mathrm{diag}(q_p\mat{I}_3,q_v\mat{I}_3,q_m,q_d\mat{I}_3)$
+(Table~\ref{tab:params}). Treating the
+attitude as a known input keeps the filter free of quaternion states and their
+log-map singularity; the body rate is not needed by the translational estimator.
+
+\subsection{Prediction and update}
+Each step propagates the dynamics, $\hat{\vect{x}}^-=\vect{f}(\hat{\vect{x}})$
+and $\mat{P}^-=\mat{F}\mat{P}\mat{F}^{\!\top}+\mat{Q}$ with
+$\mat{F}=\partial\vect{f}/\partial\vect{x}$, and applies two measurement updates.
+The odometry \eqref{eq:y} is a linear update through
+$\mat{H}=[\mat{I}_6\ \mat{0}]$ with covariance $\mat{R}$. The accelerometer
+\eqref{eq:imu} is a nonlinear update with model
+$\vect{g}(\vect{x})=(T/m)\vect{a}+\vect{d}-c\,\norm{\vect{v}}\,\vect{v}$,
+Jacobian $\mat{H}_s=\partial\vect{g}/\partial\vect{x}$, and covariance
+$\mat{R}_s$; this residual is the term that drives $\vect{d}$ and makes the
+filter a virtual force sensor. Both updates use the standard EKF gain
+$\mat{K}=\mat{P}^-\mat{H}^{\!\top}(\mat{H}\mat{P}^-\mat{H}^{\!\top}+\mat{R})^{-1}$,
+and the mass and force are clipped to physical bounds after each step.
+
+\subsection{The mass gate}\label{sec:gate}
+A plain EKF updates every state at every step, including the mass when it is
+unobservable. Under the hover ambiguity of Proposition~\ref{prop:hover} this
+attributes a vertical force to a mass change and corrupts the estimate. The
+observability-aware filter instead conditions the mass update on the
+identifiability $\tilde\sigma$ of \eqref{eq:snorm}, computed online over a sliding
+window from the known thrust and attitude. When the mass is not persistently
+excited, the corresponding row of the Kalman gain is set to zero and its process
+noise is suppressed,
+\begin{equation}
+\mat{K}_m\leftarrow\vect{0},\quad q_m\leftarrow 0
+\qquad\text{while}\quad \tilde\sigma<\tilde\sigma_{\min}.
+\label{eq:gate}
+\end{equation}
+With $q_m=0$ and the mass having no dynamics of its own ($F_{mm}=1$), the
+prediction leaves the mass variance unchanged, $P_m^-=P_m$, so while the gate is
+closed the mass neither drifts nor inflates: it is held exactly at its last
+well-identified value with its uncertainty. The realized hold is therefore as good
+as the gate's closure: in still hover the gate stays shut and the mass is held
+exactly, whereas a windy hover intermittently re-excites $\tilde\sigma$ and
+re-opens the gate, leaving the residual movement reported in
+Section~\ref{sec:results}. Suppressing the process noise is what
+makes this hold; were the variance left to grow, a transient spike in
+$\tilde\sigma$ would re-open the update with a large gain and let a single sample
+move the mass. To reject such spikes the gate re-opens the update only after
+$\tilde\sigma$ has stayed above $\tilde\sigma_{\min}$ for a dwell time $t_d$
+(Table~\ref{tab:params}), not on an isolated sample; this separates the sustained
+excitation of a maneuver or probe from a momentary gust. The force update is
+never gated, since $\vect{d}$ is observable throughout (Section~\ref{sec:obs}).
+
+\subsection{Choice of estimator: EKF versus moving horizon}\label{sec:nomhe}
+The accelerometer makes $\vect{d}$ an algebraic measurement \eqref{eq:regressor},
+so the force needs no temporal smoothing to be recovered, and the mass, once
+excited, is identified by the recursive update alone. A moving-horizon estimator
+over the same state and measurements was implemented for comparison and did not
+improve the estimates (Section~\ref{sec:results}): the window adds cost without a
+benefit when the informative measurement is instantaneous and the recursive
+filter already carries the full measurement history. We therefore retain the EKF
+and place the contribution in the observability logic rather than in the
+estimator class.
+
+% ════════════════════ CONTROLLER ════════════════════
+\section{Closed-Loop Use: Control and Active Calibration}\label{sec:nmpc}
+
+The virtual sensor is used in closed loop by a nonlinear model-predictive
+controller (NMPC) that serves two roles: it rejects the sensed disturbance by
+feedforward (the application), and it injects the active probe that recalibrates
+the mass when needed (the self-calibration of Section~\ref{sec:active}). We first
+describe the controller, then the probe.
+
+The estimated force closes the loop through this NMPC, which
+tracks a reference trajectory while rejecting the
+disturbance by feedforward. The controller keeps the full pose, so its state is
+the position, velocity, attitude, and body rate,
+$\vect{x}_c=[\vect{p}^{\!\top},\vect{v}^{\!\top},\vect{q}^{\!\top},\vect{\omega}^{\!\top}]^{\!\top}\in\R^{13}$,
+and its input is the collective thrust and the commanded body rate,
+$\vect{u}=[T,\,\vect{\omega}_{\text{cmd}}^{\!\top}]^{\!\top}\in\R^{4}$. The
+prediction model is the rigid-body dynamics
+\eqref{eq:dp}--\eqref{eq:dw} with the estimated mass and the estimated
+disturbance injected,
+\begin{equation}
+\dot{\vect{v}} = -g\,\vect{e}_3 + \frac{T}{\hat{m}}\,\mat{R}(\vect{q})\,\vect{e}_3
+                  + \hat{\vect{d}},\qquad
+\dot{\vect{\omega}} = \tfrac{1}{\tau_{rc}}\,(\vect{\omega}_{\text{cmd}}-\vect{\omega}),
+\label{eq:nmpc-dyn}
+\end{equation}
+so that $\hat{\vect{d}}$ enters as an additive specific-force feedforward that
+cancels the external force; the rate loop uses the nominal time constant
+$\tau_{rc}$. The prediction model carries no explicit drag term; because the
+estimator runs with $c=0$, the aerodynamic drag is absorbed into $\hat{\vect{d}}$
+and is therefore compensated through the same feedforward. The disturbance
+estimate is smoothed by an exponential moving average before injection.
+
+\subsection{Cost and constraints}
+Over a horizon of $N_c$ nodes the controller minimizes
+\begin{align}
+J=\ &\sum_{k=0}^{N_c-1}\Big(
+   \norm{\vect{p}_k-\vect{p}_k^{\text{ref}}}^2_{\mat{Q}_p}
+  +\norm{\vect{v}_k-\vect{v}_k^{\text{ref}}}^2_{\mat{Q}_v}\nonumber\\
+  &\qquad +\norm{\vect{e}_q(\vect{q}_k)}^2_{\mat{Q}_a}
+  +\norm{\vect{u}_k-\vect{u}_k^0}^2_{\mat{R}_u}\Big)
+  +\norm{\vect{e}_N}^2_{\mat{Q}_N},
+\label{eq:nmpc-cost}
+\end{align}
+where $\vect{p}^{\text{ref}}$ and $\vect{v}^{\text{ref}}$ are the reference
+position and velocity,
+$\vect{e}_q=\mathrm{Log}(\vect{q}^{-1}\!\otimes\vect{q}^{\text{ref}})\in\R^3$ is
+the attitude error through the quaternion logarithm, with the same hemisphere
+correction as the estimator, and the input is regularized around the hover
+equilibrium $\vect{u}^0=[\hat{m}g,\,\vect{0}^{\!\top}]^{\!\top}$ so that a wrong
+nominal mass does not bias the regularization. The velocity reference
+$\vect{v}^{\text{ref}}$ is a feedforward term that removes the tracking lag at
+high speed; $\mat{R}_u$ weights the input deviation. The terminal error
+$\vect{e}_N$ stacks the position, velocity, and attitude errors at stage $N_c$,
+weighted by $\mat{Q}_N=\mathrm{diag}(\mat{Q}_p,\mat{Q}_v,\mat{Q}_a)$. The inputs
+are bounded by
+$0\leq T\leq T_{\max}$ and $\norm{\vect{\omega}_{\text{cmd}}}_\infty\leq\omega_{\max}$,
+with $T_{\max}=5mg$ and $\omega_{\max}=\SI{20}{\radian\per\second}$.
+
+The problem is solved with sequential quadratic programming under the real-time
+iteration scheme, HPIPM, and a Gauss--Newton Hessian within
+acados~\cite{verschueren2022acados}, sharing the framework with the estimator. It
+uses $N_c=31$ nodes over a \SI{1.5}{\second} horizon at \SI{100}{\hertz}, with a
+per-step solve time below \SI{1}{\milli\second}.
+
+\subsection{Active excitation}\label{sec:active}
+The gate of Section~\ref{sec:gate} protects a mass that has already been
+identified, but it cannot create the information the flight does not provide:
+in sustained hover the mass stays unobservable and the estimate is frozen at
+the prior it started from. When an up-to-date mass is required and the
+identifiability is low, the controller closes this gap by actively exciting the
+unobservable direction. The same identifiability that gates the estimate now
+\emph{shapes} the excitation: by \eqref{eq:crb} the Schur complement is the Fisher
+information on the mass, so the probe that maximizes it (equivalently, its
+dimensionless form $\tilde\sigma$ at a fixed thrust budget) per unit deviation
+minimizes the mass uncertainty. We do not solve the continuous
+optimal-input-design problem~\cite{mehra1974optimal}; instead we maximize
+$\tilde\sigma$ over a small two-parameter probe family by an empirical sweep, the
+most informative probe within that family. Proposition~\ref{prop:hover}
+identifies the two levers: a vertical bob of amplitude $a_z$ that modulates the
+thrust magnitude $T$, and a lateral motion of amplitude $a_\ell$ that tilts the
+thrust axis $\vect{a}$. Both disperse the regressor $T\vect{a}$, so the probe is
+\begin{equation}
+\vect{p}^{\text{ref}}\!\leftarrow\!\vect{p}^{\text{ref}}\!+\!
+\big[a_\ell(\cos\omega_\ell t\!-\!1),\,a_\ell\sin\omega_\ell t,\,a_z\sin\omega_z t\big]^{\!\top},
+\;\; \tilde\sigma<\tilde\sigma_{\min},
+\label{eq:probe}
+\end{equation}
+and we choose the $(a_z,a_\ell)$ mix that maximizes $\tilde\sigma$ subject to a
+fixed displacement budget $a_z^2+a_\ell^2\le\rho^2$, identified empirically in
+Section~\ref{sec:results}. The
+probe is triggered only while the mass is both needed and unobservable; once the
+estimate has converged it is withdrawn and the gate again protects the mass. This
+is the active counterpart of the gate.
+
+\subsection{Remarks on closed-loop behavior}
+The model error reaching the controller stays bounded. The uncompensated force is
+the estimation residual $\vect{d}-\hat{\vect{d}}$, small because $\vect{d}$ is
+observable throughout, and the mass enters only as the multiplicative thrust
+scaling $\hat m/m$, whose error is bounded by \eqref{eq:crb} where the mass is
+observable and frozen at its identification value where it is not. A formal
+stability analysis of the coupled estimator--controller loop is left to future
+work.
+
+% ════════════════════ EXPERIMENTAL SETUP ════════════════════
+\section{Experimental Setup}\label{sec:setup}
+
+We evaluate the virtual sensor and its self-calibration in software-in-the-loop;
+this section describes the simulation environment, the flights and disturbance, the
+baselines, and the metrics.
+
+\subsection{Simulation environment}
+All experiments run in software-in-the-loop with the MuJoCo physics
+engine~\cite{todorov2012mujoco}. The quadrotor has a mass of \SI{1.05}{\kilogram},
+the sum of the body geometries in the model description, which we take as the
+ground truth for the mass estimate. The odometry is published with injected
+noise on position and velocity, so the estimator is exercised on noisy
+measurements, and
+the simulator exposes the true external force applied to the airframe on a
+dedicated channel, which serves as ground truth for the force estimate. The
+estimator, controller, and the scripts that reproduce every figure will be
+released on publication, together with a data dictionary that maps each logged
+column to its physical meaning and the source file for every figure and table. The
+parameters are listed in Table~\ref{tab:params}.
+
+\begin{table}[t]
+\centering
+\caption{Estimator and controller parameters.}
+\label{tab:params}
+\begin{tabular}{lll}
+\toprule
+Block & Parameter & Value \\
+\midrule
+Plant / sim       & mass, rate $1/\tau_{rc}$    & \SI{1.05}{\kilogram}, \SI{18}{\per\second} \\
+Drag              & $c$ (estimator)            & $0$ (absorbed in $\hat{\vect{d}}$) \\
+Odometry noise    & injected on $p,v$          & MuJoCo, released config \\
+Wind              & profile, amplitude         & step / sine, $\sim$\SI{2}{\newton} \\
+EKF meas.\ var.   & $r_p,\,r_v,\,r_s$           & $0.02,\ 0.1,\ 0.5$ \\
+EKF process       & $q_p,\,q_v,\,q_m,\,q_d$     & $10^{-6},10^{-3},10^{-5},10^{-2}$ \\
+Mass gate         & window, dwell $t_d$, $\tilde\sigma_{\min}$ & \SI{1.0}{\second}, \SI{0.25}{\second}, $0.009$ \\
+Smoothing         & $\alpha_m,\,\alpha_d$       & $0.995,\ 0.92$ \\
+Active probe      & budget $\rho$, $f$, optimal & \SI{0.40}{\meter}, \SI{0.5}{\hertz}, lateral \\
+NMPC              & $N_c$, horizon             & $31$, \SI{1.5}{\second} \\
+NMPC weights      & $\mat{Q}_p,\mat{Q}_a,\mat{Q}_v$ & $180,\ 20,\ 30$ \\
+                  & $\mat{R}_u$                & $\mathrm{diag}(0.3,5,5,5)$ \\
+NMPC limits       & $T_{\max},\,\omega_{\max}$  & $5mg$, \SI{20}{\radian\per\second} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Controller, trajectories, and disturbance}
+The vehicle is flown by the NMPC of Section~\ref{sec:nmpc} at \SI{100}{\hertz},
+the same rate as the estimator. Two references are used: a
+stationary hover and a Lissajous figure-eight flown at peak speeds from
+\SI{2.1}{} to \SI{10.2}{\meter\per\second}, which span the excitation levels of
+the observability analysis. The external force is a \emph{deterministic} per-axis
+step profile of about \SI{2}{\newton}, commanded by the controller on the
+simulator's external-force channel; the simulator applies it and re-publishes the
+\emph{applied} wrench as ground truth. Because the profile is defined in code, the
+disturbance is identical across runs and its onset is controlled (it is armed only
+once the vehicle has settled, after the verified reset), which makes every
+experiment reproducible. The force estimate, by contrast, is read from the
+accelerometer residual, independent of the commanded value, so the comparison
+against ground truth is not circular. Sustained steps keep the disturbance within
+the bandwidth of the momentum-based reading, examined in
+Section~\ref{sec:results}. For the rejection study the same disturbance is applied
+to the runs with and without the feedforward.
+
+\subsection{Baseline}
+The baseline is the \emph{plain EKF}, the same filter of Section~\ref{sec:mhe}
+but without the mass gate, run on the identical measurement stream. This
+ablation isolates the effect of the observability logic, since the two filters
+differ only in the gate. As a check on the estimator class, we also ran a
+moving-horizon estimator over the same state and measurements; it did not improve
+the estimates (Section~\ref{sec:nomhe}) and is not carried as a separate
+baseline.
+
+\subsection{Metrics}
+The virtual force sensor is assessed by the Pearson correlation between the
+estimated force and the ground truth, per axis. Mass identification is assessed
+by the error relative to the ground truth and its spread across repetitions.
+Disturbance rejection is assessed by the position tracking error, reported as the
+root-mean-square error with and without the feedforward under the same wind, and
+its significance is tested with a one-sided Mann--Whitney $U$ test at each speed.
+Each condition uses five repetitions with and five without the feedforward, so the
+pooled estimation statistics are $N=10$ per speed; the hover feedforward case has
+four (one run failed the reset check and was dropped), making it $N=4$ for the
+hover rejection point and $N=9$ for the pooled hover estimation. We report
+mean$\,\pm\,$std and the per-step solve time. The gate and active-excitation
+figures (Figs.~\ref{fig:trans},~\ref{fig:active}) are each reported over five
+repetitions with independent noise and wind realizations, shown as mean $\pm$ std;
+the disturbance-free mass-identification figure (Fig.~\ref{fig:massconv}) is a
+single representative run.
+
+% ════════════════════ RESULTS ════════════════════
+\section{Results}\label{sec:results}
+
+We present the results in the order of the contributions: the external force, the
+mass identification and its hover limit, the gate, the active excitation, the
+disturbance rejection, robustness, and a summary comparison against both
+baselines.
+
+\subsection{The virtual force sensor}
+The accelerometer makes the force algebraic \eqref{eq:regressor}, so the EKF
+recovers it without any temporal smoothing. We report three complementary
+measures so that no single one is misleading: the absolute error, the per-axis
+Pearson correlation against the step ground truth (Fig.~\ref{fig:force}), and the
+correlation under a continuously varying disturbance (Section~\ref{sec:robust}).
+The absolute error is \SI{0.4}{\newton} root-mean-square per axis on a
+$\sim$\SI{2}{\newton} disturbance; the step correlation is \num{0.91} to
+\num{0.98} across speeds (inflated by the step transitions, hence reported
+alongside the absolute error); and under a sinusoidal wind the correlation is
+\num{0.93} (Section~\ref{sec:robust}), the most demanding case. A moving-horizon
+estimator matches the EKF on these and does not improve them, confirming that the
+force needs no special estimator beyond the accelerometer residual.
+Fig.~\ref{fig:dhat} shows the estimate tracking the disturbance in the time
+domain on all three axes.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_dhat.png}
+\caption{Virtual force sensor in the time domain (single representative run): the
+EKF estimate (the specific force $\hat{\vect{d}}$ scaled by the mass to newtons)
+tracks the applied wind steps on all three axes.}
+\label{fig:dhat}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_force_corr.png}
+\caption{Per-axis force correlation against excitation ($N{=}10$; $9$ in hover).
+All axes read accurately ($0.91$--$0.98$, step ground truth); $d_z$ stays high in
+hover because the held mass absorbs the $m$--$d_z$ ambiguity of
+Proposition~\ref{prop:hover}.}
+\label{fig:force}
+\end{figure}
+
+We characterize the sensor with a calibration curve, the standard test for a force
+sensor: the estimated force ($m\hat{\vect{d}}$) against the applied force, per axis,
+over a sinusoidal wind that sweeps the range (Fig.~\ref{fig:calib}). The fit is
+near-ideal, with slopes \num{0.98}, \num{0.97}, \num{0.96} for the three axes,
+sub-\SI{0.2}{\newton} intercepts, and $R^2$ of \num{0.90}, \num{0.89}, \num{0.87};
+the unity slope confirms the reading is correctly scaled by the mass and the small
+residual is the bandwidth limit of the random-walk force model. The sensor is
+bandwidth-limited rather than range-limited: an amplitude sweep of step disturbances
+shows the slope holding above \num{0.8} up to about \SI{2}{\newton} and then falling
+(to \num{0.4} at \SI{4}{\newton}) as large, fast steps exceed the random-walk
+bandwidth, so the usable full scale is set by how quickly the disturbance varies, a
+limitation a higher-order force model would relax.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_calib.png}
+\caption{Calibration curve of the virtual force sensor: estimated force
+$m\hat{\vect{d}}$ versus the applied force, per axis, under a sinusoidal wind. The
+near-unity slope and high $R^2$ show the IMU-residual reading is a well-calibrated
+force measurement.}
+\label{fig:calib}
+\end{figure}
+
+\subsection{Mass identification and its hover limit}
+Given excitation and no confounding disturbance, the mass is identified
+accurately. Fig.~\ref{fig:massconv} shows the EKF converging from a deliberately
+wrong prior (\SI{0.60}{\kilogram}, \SI{43}{\percent} low) to within
+\SI{0.6}{\percent} of the ground truth on a disturbance-free trajectory, with the
+estimated force correctly near zero. This is the identification result: the mass
+is a physical invariant and is recovered to the true value once the trajectory
+excites the thrust direction.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_massconv.png}
+\caption{Mass identification under excitation. From a wrong prior
+(\SI{0.60}{\kilogram}) the EKF converges to within \SI{0.6}{\percent} of the
+ground truth on a disturbance-free trajectory.}
+\label{fig:massconv}
+\end{figure}
+
+Hover is where identification is hard, and it exposes the limit of the ungated
+filter. Fig.~\ref{fig:mass} shows the plain EKF mass against speed under wind
+\emph{without} the gate: in hover the estimate is biased by \SI{4.8}{\percent} and
+varies by $\pm\SI{35}{\gram}$ across the $N=9$ runs, because the vertical force is
+misread as a mass change (Proposition~\ref{prop:hover}); under excitation the bias
+falls below \SI{1}{\percent} and the spread to $\pm\SI{2}{\gram}$, in agreement
+with the $\sigma^{-1}$ conditioning of Section~\ref{sec:obs}. This hover bias,
+which appears even when the mass is seeded from the correct value, is exactly what
+the gate prevents, as the next experiment shows.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_mass_id.png}
+\caption{Mass observability against excitation, probed with an \emph{ungated} EKF
+($N{=}10$ per speed, $N{=}9$ in hover; mean $\pm$ std): biased in hover, accurate
+under excitation, confirming Proposition~\ref{prop:hover} and the $\sigma^{-1}$
+conditioning.}
+\label{fig:mass}
+\end{figure}
+
+\subsection{The mass gate protects the estimate}
+Fig.~\ref{fig:trans} flies an aggressive trajectory followed by a hover, both
+under wind, over five runs with independent noise and wind. During the trajectory
+both filters identify the mass. In the hover that follows, the plain EKF is blind
+to the lost observability and attributes the vertical wind to a mass change; its
+drift is more pronounced here than in the steady-hover battery of
+Fig.~\ref{fig:mass} (\SI{4.8}{\percent}), because the maneuver leaves the filter
+with an inflated mass covariance, so the wind moves the estimate by
+\SI{\driftPlain}{\percent} over the transition ($7.0\pm0.6$, $N{=}5$). The
+observability-aware filter detects $\tilde\sigma$ falling below
+$\tilde\sigma_{\min}$ and gates the mass update, cutting the drift to
+\SI{\driftGated}{\percent} ($3.3\pm0.8$); a residual movement remains because the
+windy hover still excites $\tilde\sigma$ intermittently, but the gate more than
+halves the error and is consistently better than the plain EKF across all runs.
+The gate protects an estimate that hover can no longer fully support.
+
+This advantage comes specifically from the Schur complement, not merely from gating
+on excitation. We ran the same filter with the gate keyed instead to a generic
+persistency-of-excitation proxy, the total regressor energy $\sum_k\norm{\mat{\Phi}_k}^2$,
+a conventional dead-zone. Because hover is high in thrust energy though zero in
+dispersion, this proxy never closes and the result coincides with the ungated plain
+EKF (\SI{7.0}{\percent}): a generic excitation measure cannot tell hover from a
+maneuver. Only $\tilde\sigma$, which measures the dispersion that isolates the
+mass--vertical-force coupling, detects the unobservability and protects the
+calibration.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_trans.png}
+\caption{Mass over a windy maneuver-to-hover transition ($N{=}5$, mean $\pm$ std).
+In the hover (shaded) the plain EKF drifts to $\sim$\SI{7}{\percent} and the MHE to
+$\sim$\SI{5}{\percent}, while the obs-aware EKF (ours) holds \SI{3}{\percent} once
+$\tilde\sigma$ falls below the threshold (bottom).}
+\label{fig:trans}
+\end{figure}
+
+\subsection{Active excitation recovers an unobservable mass}
+When the mass is unknown and the vehicle must hover, no passive estimator can
+recover it. Fig.~\ref{fig:active} starts from a deliberately wrong prior
+(\SI{0.70}{\kilogram}) in hover. The passive filter stays frozen at the prior,
+since hover provides no information (the passive estimate stays at
+$-\SI{33.3}{\percent}$ across all $N{=}5$ runs); the active controller injects the
+probe of \eqref{eq:probe}, $\tilde\sigma$ rises above the threshold, the gate
+opens, and the mass converges from \SI{0.70}{} toward the ground truth, after which
+the probe is withdrawn and the estimate is again protected. Using the
+most informative probe (Section~\ref{sec:probeopt}), the mass error falls from
+\SI{33}{\percent} to about \SI{3}{\percent} ($2.5\pm1.6$,
+$N{=}5$); the recovery depends on the probe shape, which the next experiment
+optimizes. By contrast, under a disturbance-free trajectory the same filter
+identifies the mass to within \SI{0.6}{\percent} (Fig.~\ref{fig:massconv}); the
+residual here is the price of identifying in hover from a wrong prior.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_active.png}
+\caption{Mass recovery from a wrong hover prior (\SI{0.70}{\kilogram}), $N{=}5$,
+mean $\pm$ std. Passively the estimate stays frozen; the active probe (shaded) lifts
+$\tilde\sigma$ above the threshold (bottom), recovers the mass, then withdraws.}
+\label{fig:active}
+\end{figure}
+
+\subsection{Shaping the probe by identifiability}\label{sec:probeopt}
+The recovery in Fig.~\ref{fig:active} depends on the probe shape, and the
+identifiability tells us which shape is best: since the Schur complement is the
+Fisher information on the mass \eqref{eq:crb}, the probe that raises it most per unit
+deviation tightens the bound. We sweep the vertical/lateral mix of \eqref{eq:probe}
+at a fixed displacement budget, from a pure lateral tilt to a pure vertical bob, and
+measure the achieved $\tilde\sigma$ and the resulting mass recovery
+(Fig.~\ref{fig:probeopt}, $N{=}5$ per shape). The lateral tilt raises $\tilde\sigma$
+well above every other mix and is the only shape whose recovery is both accurate and
+tightly distributed, as \eqref{eq:crb} predicts: it is a variance bound, so the
+highest-$\tilde\sigma$ probe yields the lowest-variance recovery. The most informative
+mix (\probeOptShape) recovers the mass to \SI{\probeOptErr}{\percent}, against
+\SI{\probeFixErr}{\percent} for the original mixed shape at the same displacement;
+the difference is significant against every other shape (one-sided Mann--Whitney,
+$p<0.01$). This shape is optimal only within the two-parameter family we sweep, not
+the unconstrained optimal input.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_probe_opt.png}
+\caption{Probe shaping by identifiability. Sweeping the probe's vertical/lateral mix
+at a fixed displacement budget, the mass recovery error falls as $\tilde\sigma$
+rises; the $\tilde\sigma$-maximizing mix is circled.}
+\label{fig:probeopt}
+\end{figure}
+
+\subsection{Disturbance rejection}
+Feeding the estimated force to the controller reduces the tracking error under
+wind, and the reduction scales with how much the wind dominates the dynamics
+(Fig.~\ref{fig:rej}, Table~\ref{tab:rej}). Up to \SI{6}{\meter\per\second} the
+wind dominates and the feedforward cuts the error by \SI{77}{} to
+\SI{80}{\percent} (\SI{78}{\percent} in hover); as the speed grows the wind
+becomes a small fraction of the aerodynamic forces and the reduction falls to
+\SI{34}{\percent} at \SI{10}{\meter\per\second}. The improvement is statistically
+significant at every speed: a one-sided Mann--Whitney $U$ test of the
+feedforward against the baseline rejects the null at each operating point
+($p<0.01$, $n=5$ per condition; $p=0.008$ for the $n=4$ hover case), with a large
+pooled effect size (Cohen's $d=5.7$). The estimator
+and controller each run at \SI{100}{\hertz} with a per-step time below
+\SI{1}{\milli\second}. Fig.~\ref{fig:traj} shows the spatial effect on the
+figure-eight: with the feedforward the vehicle stays on the reference, while
+without it the wind pushes it off the path.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_traj.png}
+\caption{Trajectory under wind, orthogonal projections sharing the $x$ axis. With
+the estimated-force feedforward (blue) the vehicle stays on the reference
+(dotted); without it (red) the wind pushes it off the path.}
+\label{fig:traj}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_rejection.png}
+\caption{Disturbance rejection against speed ($N=5$ per mode; hover $N=4$, mean $\pm$ std). Feeding the
+estimated force to the controller reduces the tracking error most when the wind
+dominates (hover) and less as the speed grows.}
+\label{fig:rej}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{EKF estimation against trajectory speed ($N=10$): mass estimate and
+per-axis force correlation with the ground truth. The force is read accurately
+throughout; the (ungated) mass is biased and noisy in hover and accurate under
+excitation.}
+\label{tab:id}
+\begin{tabular}{cccc}
+\toprule
+Peak speed [\si{\meter\per\second}] & $\hat m$ [\si{\kilogram}] & corr $d_x/d_y$ & corr $d_z$ \\
+\midrule
+hover & $1.101\pm0.035$ & $0.98/0.98$ & $0.97$ \\
+2.1   & $1.083\pm0.027$ & $0.97/0.98$ & $0.98$ \\
+3.8   & $1.049\pm0.028$ & $0.97/0.98$ & $0.95$ \\
+6.1   & $1.051\pm0.010$ & $0.97/0.97$ & $0.91$ \\
+8.2   & $1.056\pm0.003$ & $0.96/0.95$ & $0.94$ \\
+10.2  & $1.053\pm0.002$ & $0.95/0.94$ & $0.93$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Disturbance rejection ($N=5$ per mode; hover $N=4$): tracking RMSE with and without the force
+feedforward under the same wind, against peak speed.}
+\label{tab:rej}
+\begin{tabular}{cccc}
+\toprule
+Peak [\si{\meter\per\second}] & No ff [\si{\centi\meter}] & ff [\si{\centi\meter}] & Reduction \\
+\midrule
+hover & $38.7$ & $8.5$  & $78\%$ \\
+2.1   & $38.0$ & $7.8$  & $80\%$ \\
+3.8   & $40.0$ & $8.4$  & $79\%$ \\
+6.1   & $36.0$ & $8.4$  & $77\%$ \\
+8.2   & $32.7$ & $14.6$ & $55\%$ \\
+10.2  & $32.8$ & $21.6$ & $34\%$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Robustness}\label{sec:robust}
+The virtual force sensor is not specific to the step disturbance used above.
+Under a sinusoidal wind, a continuously varying profile, the estimate tracks the
+ground truth with a per-axis correlation near \num{0.93} (Fig.~\ref{fig:sine}),
+slightly below the step value because the moving disturbance has more bandwidth.
+All results so far use the simulator's injected odometry noise, so the estimator
+is already exercised on noisy measurements rather than a clean ground-truth
+state. The gate threshold is stable across maneuvers once the identifiability is
+normalized. The raw $\sigma$ separates the regimes but its absolute scale follows
+the thrust level, so it required a maneuver-specific threshold (a span of more
+than an order of magnitude across our experiments). The dimensionless
+$\tilde\sigma$ of \eqref{eq:snorm} removes that dependence: settled hover sits at
+$\tilde\sigma\approx0.005$ (windowed, peak $\approx0.007$) while an aggressive
+trajectory reaches $\tilde\sigma\approx0.34$, nearly two orders of magnitude apart.
+A single $\tilde\sigma_{\min}=0.009$ classifies hover, maneuver, and the active probe
+alike: the probe sustains $\tilde\sigma$ above the threshold (the lateral tilt
+reaching the highest value of the probe family, Fig.~\ref{fig:probeopt}), so it
+reliably re-opens the gate while hover keeps it closed.
+The remaining sensitivity is to transient gusts during a windy hover transition,
+which can momentarily spike $\tilde\sigma$; the dwell time $t_d$, which requires the
+threshold to be exceeded for a sustained interval, rejects these so the gate holds.
+The threshold is thus dimensionless and shared across all regimes, with the dwell,
+not the absolute signal scale, handling the residual gust sensitivity.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_dhat_sine.png}
+\caption{Virtual force sensor under a sinusoidal wind (single representative run), a
+different disturbance profile from the steps of Fig.~\ref{fig:dhat}. The estimate
+($\hat{\vect{d}}$ scaled to newtons) tracks the ground truth on all three axes
+(per-axis correlation near \num{0.93}).}
+\label{fig:sine}
+\end{figure}
+
+\subsection{Robustness to sensor errors}\label{sec:senserr}
+A virtual force sensor lives or dies by the error sources a real IMU and thrust map
+introduce, which the ideal simulator does not exercise. We inject them into the
+estimator inputs and sweep their magnitude (Fig.~\ref{fig:robust}): an
+accelerometer bias up to \SI{0.4}{\meter\per\square\second}, a scale-factor error
+up to \SI{10}{\percent}, and a thrust-coefficient mismatch up to \SI{10}{\percent}.
+The sensor degrades gracefully and proportionally, with no breakdown. The force
+error rises from \SI{0.42}{\newton} to at most \SI{0.58}{\newton} (under the largest
+bias), and the mass calibration from below \SI{1}{\percent} to at most
+\SI{11.5}{\percent} (under a \SI{10}{\percent} thrust mismatch, which couples almost
+one-to-one into the mass). The bias loads the force but barely the mass, while the
+scale and thrust errors load the mass through the $T/m$ term, as expected; the
+near-linear degradation indicates the calibration error is recoverable by a
+one-time bench calibration of the bias and scale.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_robust.png}
+\caption{Robustness to real-sensor errors. Force absolute error (blue, left axis)
+and mass calibration error (red, right axis) against injected accelerometer bias,
+accelerometer scale-factor error, and thrust-coefficient mismatch. The virtual
+sensor degrades gracefully and proportionally, with no catastrophic failure.}
+\label{fig:robust}
+\end{figure}
+
+\subsection{Estimator comparison}
+Table~\ref{tab:compare} consolidates the comparison on the identical data. The
+two baselines fail in different ways, both traceable to the hover ambiguity of
+Proposition~\ref{prop:hover}. The plain EKF reads the force well, including the
+vertical axis, but lets the hover mass drift as the vertical wind is misread as a
+mass change. The moving-horizon estimator is worse: its free mass both corrupts
+the vertical force, which it absorbs, and drifts in hover (Fig.~\ref{fig:trans}),
+and the window adds cost without recovering either. Our observability-aware EKF
+keeps both: the EKF structure holds the vertical force, and the gate keeps the mass
+closest to the truth in the windy hover (\SI{3.3}{\percent}, against
+\SI{7.0}{\percent} for the plain EKF and \SI{5.3}{\percent} for the MHE). With
+active excitation it is also the only one that recovers the mass from a wrong prior
+in hover. All three run in real time at \SI{100}{\hertz}.
+
+\begin{table}[t]
+\centering
+\caption{Estimator comparison on identical data. Force and excited-mass entries are
+pooled over the battery ($N{=}10$); hover and recovery entries are from
+Figs.~\ref{fig:trans} and~\ref{fig:active}.}
+\label{tab:compare}
+\begin{tabular}{lccc}
+\toprule
+ & MHE & plain EKF & obs-aware EKF \\
+ &     & (baseline) & (ours) \\
+\midrule
+horizontal force corr      & 0.96 & 0.97 & 0.97 \\
+vertical force corr        & 0.66 & 0.95 & 0.95 \\
+mass error, excited        & $+0.4\%$ & $+0.4\%$ & $+0.4\%$ \\
+mass error, windy hover    & $5.3\%$ & $7.0\%$ & $\mathbf{3.3\%}$ \\
+recover mass, wrong prior  & no & no & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ════════════════════ CONCLUSION ════════════════════
+\section{Conclusion}\label{sec:conclusion}
+
+We built a self-calibrating virtual force sensor for quadrotors. The external
+specific force is read directly from the accelerometer; its only calibration
+parameter, the mass, is observable only under excitation and is confounded with a
+vertical force in hover. We made the calibration observability-aware on two levels:
+an extended Kalman filter that gates the mass calibration by the online
+identifiability $\tilde\sigma$, freezing it when it cannot be seen, and a
+model-predictive controller that injects a minimal probe to restore identifiability
+when the mass must be recalibrated but the flight is too gentle. In
+software-in-the-loop the sensor reads the external force to about \SI{0.4}{\newton}
+RMS per axis (per-axis correlation \num{0.93} under continuous wind), the gate holds
+the mass across a windy hover transition to \SI{3}{\percent} where a plain EKF drifts to
+\SI{7}{\percent}, the active probe
+recovers the mass from a wrong prior that hover alone cannot identify, and the
+force feedforward reduces the tracking error by up to \SI{80}{\percent} under
+wind.
+
+A matched comparison showed that a moving-horizon estimator does not improve on
+the EKF for this problem, because the informative measurement is instantaneous;
+the contribution therefore lies in the observability logic, not in the estimator
+class. The dead-zone and the excitation are each classical; what ties them together
+is the closed-form Schur complement, the Fisher information on the mass computed from
+known signals (its inverse is the Cram\'er--Rao bound), whose dimensionless form
+$\tilde\sigma$ drives the gate and the probe from one online scalar, including the
+choice of the most informative excitation. The main
+limitation is that the study is in simulation; hardware validation with a
+motion-capture system and a calibrated disturbance is the immediate next step, as
+is a continuous (rather than family-restricted) optimal-input design.
+Because the filter reads any external specific force, the approach extends toward
+contact and tether forces, where an observability-aware wrench estimate would
+support aerial physical interaction without a dedicated force sensor.
+
+% ════════════════════ REFERENCES ════════════════════
+\begin{thebibliography}{99}
+
+% --- External wrench / force estimation (momentum & residual observers) ---
+\bibitem{tomic2017external}
+T.~Tomi\'c, C.~Ott, S.~Haddadin,
+``External Wrench Estimation, Collision Detection, and Reflex Reaction for Flying Robots,''
+\emph{IEEE Trans.\ Robotics}, vol.~33, no.~6, pp.~1467--1482, 2017.
+
+\bibitem{ruggiero2014impedance}
+F.~Ruggiero \emph{et al.},
+``Impedance Control of VToL UAVs with a Momentum-Based External Generalized Forces Estimator,''
+in \emph{IEEE ICRA}, 2014, pp.~2093--2099.
+
+% --- Moving-horizon estimation ---
+\bibitem{rao2003constrained}
+C.~V.~Rao, J.~B.~Rawlings, D.~Q.~Mayne,
+``Constrained State Estimation for Nonlinear Discrete-Time Systems: Stability and Moving Horizon Approximations,''
+\emph{IEEE Trans.\ Autom.\ Control}, vol.~48, no.~2, pp.~246--258, 2003.
+
+\bibitem{liu2023nonlinear}
+M.~Liu, Y.~Tan, I.~Mareels,
+``Nonlinear Moving Horizon Estimation for Quadrotor System Identification,''
+\emph{Control Eng.\ Practice}, vol.~135, art.~no.~105508, 2023.
+
+% --- Online parameter / inertial identification ---
+\bibitem{burri2018system}
+M.~Burri \emph{et al.},
+``A Framework for Maximum Likelihood Parameter Identification Applied on MAVs,''
+\emph{J.\ Field Robotics}, vol.~35, no.~1, pp.~5--22, 2018.
+
+\bibitem{wuest2019online}
+V.~W\"uest, V.~Kumar, G.~Loianno,
+``Online Estimation of Geometric and Inertia Parameters for Multirotor Aerial Vehicles,''
+in \emph{IEEE ICRA}, 2019, pp.~1884--1890.
+
+\bibitem{wensing2017geometric}
+P.~M.~Wensing, S.~Kim, J.-J.~E.~Slotine,
+``Linear Matrix Inequalities for Physically Consistent Inertial Parameter Identification,''
+\emph{IEEE Robotics Autom.\ Lett.}, vol.~3, no.~1, pp.~60--67, 2018. arXiv:1711.03896.
+
+% --- Optimal input design / active sensing ---
+\bibitem{mehra1974optimal}
+R.~K.~Mehra,
+``Optimal Input Signals for Parameter Estimation in Dynamic Systems: Survey and New Results,''
+\emph{IEEE Trans.\ Autom.\ Control}, vol.~19, no.~6, pp.~753--768, 1974.
+
+% --- Actuator dynamics / INDI ---
+\bibitem{smeur2016adaptive}
+E.~Smeur, Q.~Chu, G.~de Croon,
+``Adaptive Incremental Nonlinear Dynamic Inversion for Attitude Control of Micro Air Vehicles,''
+\emph{J.\ Guid.\ Control Dyn.}, vol.~39, no.~3, pp.~450--461, 2016.
+
+\bibitem{bauersfeld2021neurobem}
+L.~Bauersfeld, E.~Kaufmann, P.~Foehn, S.~Sun, D.~Scaramuzza,
+``NeuroBEM: Hybrid Aerodynamic Quadrotor Model,''
+in \emph{Robotics: Science and Systems}, 2021.
+
+% --- Disturbance-aware / data-driven MPC for quadrotors ---
+\bibitem{torrente2021data}
+G.~Torrente, E.~Kaufmann, P.~Foehn, D.~Scaramuzza,
+``Data-Driven MPC for Quadrotors,''
+\emph{IEEE Robotics Autom.\ Lett.}, vol.~6, no.~2, pp.~3769--3776, 2021.
+
+\bibitem{sun2022comparative}
+S.~Sun, A.~Romero, P.~Foehn, E.~Kaufmann, D.~Scaramuzza,
+``A Comparative Study of Nonlinear MPC and Differential-Flatness-Based Control for Quadrotor Agile Flight,''
+\emph{IEEE Trans.\ Robotics}, vol.~38, no.~6, pp.~3357--3373, 2022.
+
+\bibitem{oconnell2022neuralfly}
+M.~O'Connell, G.~Shi, X.~Shi, K.~Azizzadenesheli, A.~Anandkumar, Y.~Yue, S.-J.~Chung,
+``Neural-Fly Enables Rapid Learning for Agile Flight in Strong Winds,''
+\emph{Science Robotics}, vol.~7, no.~66, art.~eabm6597, 2022.
+
+% --- State-estimation foundations (notation / manifold) ---
+\bibitem{sola2017quaternion}
+J.~Sol\`a,
+``Quaternion Kinematics for the Error-State Kalman Filter,''
+arXiv:1711.02508, 2017.
+
+\bibitem{sola2018micro}
+J.~Sol\`a, J.~Deray, D.~Atchuthan,
+``A Micro Lie Theory for State Estimation in Robotics,''
+arXiv:1812.01537, 2018.
+
+\bibitem{forster2015imu}
+C.~Forster, L.~Carlone, F.~Dellaert, D.~Scaramuzza,
+``IMU Preintegration on Manifold for Efficient Visual-Inertial Maximum-a-Posteriori Estimation,''
+in \emph{Robotics: Science and Systems}, 2015.
+
+% --- Tooling ---
+\bibitem{verschueren2022acados}
+R.~Verschueren \emph{et al.},
+``acados: a modular open-source framework for fast embedded optimal control,''
+\emph{Math.\ Program.\ Comput.}, vol.~14, no.~1, pp.~147--183, 2022.
+
+\bibitem{todorov2012mujoco}
+E.~Todorov, T.~Erez, Y.~Tassa,
+``MuJoCo: A Physics Engine for Model-Based Control,''
+in \emph{IEEE/RSJ IROS}, 2012, pp.~5026--5033.
+
+\end{thebibliography}
+
+\end{document}

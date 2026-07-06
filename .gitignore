@@ -1,0 +1,30 @@
+# Build artifacts
+build/
+
+# acados generated code + root OCP dumps
+c_generated_code_*/
+/acados_ocp_*.json
+
+# Results (CSVs, figures — heavy)
+results/
+figures_*/
+
+# Paper: compiled PDF + heavy reference corpus (regenerable / third-party)
+paper/paper.pdf
+paper/ref_corpus/
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor / OS
+.vscode/
+.DS_Store
+
+# LaTeX build junk
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.synctex.gz
