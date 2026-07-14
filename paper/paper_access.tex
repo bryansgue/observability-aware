@@ -1,36 +1,39 @@
-\documentclass[lettersize,journal]{IEEEtran}
-\usepackage{amsmath,amsfonts}
-\usepackage{algorithmic}
-\usepackage{algorithm}
-\usepackage{array}
-\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
-\usepackage{textcomp}
-\usepackage{stfloats}
-\usepackage{url}
-\usepackage{verbatim}
+\documentclass{ieeeaccess}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{mathtools}
 \usepackage{graphicx}
-\graphicspath{{../results/}}
-\usepackage{cite}
-\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
-
-\usepackage[T1]{fontenc}
+\graphicspath{{../results/}{./}}
+\usepackage{textcomp}
 \usepackage[utf8]{inputenc}
-\usepackage{amsmath,amssymb,amsfonts}
+\usepackage[T1]{fontenc}
 \usepackage{bm}
-\usepackage{cite}
-\usepackage{algorithmic}
 \usepackage{algorithm}
-\usepackage{url}
+\usepackage{algorithmic}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{color}
 \usepackage{hyperref}
 \hypersetup{hidelinks}
-\usepackage{color}
-\usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{makecell}
-\usepackage{siunitx}
+\usepackage{array}
+\usepackage{url}
 \usepackage{pifont}
-\usepackage{stfloats}
-\usepackage{amsthm}
+\usepackage{siunitx}
+\makeatletter
+\AtBeginDocument{\DeclareMathVersion{bold}
+\SetSymbolFont{operators}{bold}{T1}{times}{b}{n}
+\SetSymbolFont{NewLetters}{bold}{T1}{times}{b}{it}
+\SetMathAlphabet{\mathrm}{bold}{T1}{times}{b}{n}
+\SetMathAlphabet{\mathit}{bold}{T1}{times}{b}{it}
+\SetMathAlphabet{\mathbf}{bold}{T1}{times}{b}{n}
+\SetMathAlphabet{\mathtt}{bold}{OT1}{pcr}{b}{n}
+\SetSymbolFont{symbols}{bold}{OMS}{cmsy}{b}{n}
+\renewcommand\boldmath{\@nomath\boldmath\mathversion{bold}}}
+\makeatother
+
+% ── Theorem-like environments ──────────────────────────────────────────
 \newtheorem{proposition}{Proposition}
 \newtheorem{remark}{Remark}
 \newtheorem{lemma}{Lemma}
@@ -57,16 +60,37 @@
 \newcommand{\probeFixErr}{8}
 
 \begin{document}
+\history{Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.}
+\doi{10.1109/ACCESS.2026.0000000}
 
-\title{Observability-Aware Virtual Force Sensing and
-Self-Calibration for Quadrotors}
+\title{Observability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors}
 
-\author{Jos\'e~Varela-Ald\'as, Bryan~S.~Guevara, Ang\'elica~Carri\'on,
-and~Tiago~Nascimento}
+\author{{Jos\'e Varela-Ald\'as}\authorrefmark{1},~\IEEEmembership{Senior Member, IEEE},
+{Bryan~S.~Guevara}\authorrefmark{2},
+{Ang\'elica Carri\'on}\authorrefmark{3},
+and {Tiago Nascimento}\authorrefmark{2}}
 
-\maketitle
+\address[1]{Centro de Investigaci\'on MIST, Facultad de Ingenier\'ias,
+Universidad Tecnol\'ogica Indoam\'erica, \mbox{Ambato 180103}, Ecuador
+(e-mail: josevarela@uti.edu.ec)}
 
-% ════════════════════ ABSTRACT ════════════════════
+\address[2]{Laboratory of Systems and Robotics Engineering (LASER),
+Center of Informatics (CI), Federal University of Para\'iba (UFPB),
+Jo\~ao Pessoa, PB 58051-900, Brazil
+(e-mail: bryansgue@laser.ci.ufpb.br; tiago@laser.ufpb.br)}
+
+\address[3]{Faculty of Digital Engineering and Emerging Technologies,
+International University of Ecuador UIDE, Quito 170411, Ecuador
+(e-mail: anquitoca@uide.edu.ec)}
+
+\tfootnote{The research was funded by Universidad Tecnol\'ogica Indoam\'erica.}
+
+\markboth
+{J. Varela-Ald\'as \headeretal:~Observability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors}
+{J. Varela-Ald\'as \headeretal:~Observability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors}
+
+\corresp{Corresponding author: Jos\'e Varela-Ald\'as (e-mail: josevarela@uti.edu.ec).}
+
 \begin{abstract}
 Many aerial tasks, such as flying in wind or carrying a payload, require the
 external force on the airframe, yet quadrotors rarely carry a force sensor. We turn
@@ -90,15 +114,19 @@ under injected accelerometer and thrust errors and runs in real time at
 \SI{100}{\hertz}.
 \end{abstract}
 
-\begin{IEEEkeywords}
+\begin{keywords}
 Aerial robotics, force estimation, inertial sensing, observability,
 self-calibration, virtual sensors.
-\end{IEEEkeywords}
+\end{keywords}
+
+\titlepgskip=-21pt
+
+\maketitle
 
 % ════════════════════ INTRODUCTION ════════════════════
 \section{Introduction}\label{sec:intro}
 
-The external force acting on a quadrotor, from wind, a payload, or physical
+\PARstart{T}{he} external force acting on a quadrotor, from wind, a payload, or physical
 contact, governs how it must be flown, yet small aerial platforms rarely carry a
 force or wrench sensor: the payload and power budget favor reusing the sensors
 already on board. The accelerometer offers a route. It measures the
@@ -1296,5 +1324,9 @@ E.~Todorov, T.~Erez, Y.~Tassa,
 in \emph{IEEE/RSJ IROS}, 2012, pp.~5026--5033.
 
 \end{thebibliography}
+
+\EOD
+
+\vfill
 
 \end{document}

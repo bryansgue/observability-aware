@@ -74,7 +74,7 @@ def main():
                     label=NICE[tag])
     ax.scatter([sig[opt]], [err[opt]], s=210, facecolors="none",
                edgecolors="#c0392b", linewidths=2.0, zorder=4,
-               label="family-optimal")
+               label="most informative")
     ax.set_xlabel(r"achieved identifiability $\tilde\sigma$ (probe)")
     ax.set_ylabel("mass recovery error [%]")
     ax.legend(loc="upper center", ncol=3, framealpha=0.95, fontsize=9)
