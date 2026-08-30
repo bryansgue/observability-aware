@@ -33,7 +33,7 @@ def main():
             ("y", "dy_ekf", "vtheta", "#2ca02c"),
             ("z", "dz_ekf", "a_theta", "#c0392b")]
 
-    fig, axs = plt.subplots(3, 1, figsize=(7.0, 5.2))
+    fig, axs = plt.subplots(3, 1, figsize=(7.0, 6.2))
     for ax, (lbl, de, gt, col) in zip(axs, axes):
         est = M_TRUE * d[m, c[de]]      # estimated force [N]
         g = d[m, c[gt]]                  # ground-truth force [N]
@@ -44,8 +44,8 @@ def main():
         ax.scatter(g, est, s=4, alpha=0.25, color=col)
         xx = np.linspace(lo, hi, 50)
         ax.plot(xx, a*xx+b, color=col, lw=1.8, label=f"fit: slope {a:.2f}")
-        ax.set_xlabel(f"true force $f_{{e,{lbl}}}$ [N]")
-        ax.set_ylabel(f"estimated $m\\hat{{d}}_{lbl}$ [N]")
+        ax.set_xlabel(f"$f_{{e,{lbl}}}$ [N]")
+        ax.set_ylabel(f"$m\\hat{{d}}_{lbl}$ [N]")
         ax.set_title(["(a)","(b)","(c)"][["x","y","z"].index(lbl)], fontsize=11, pad=3)
         ax.legend(loc="upper left", framealpha=0.9, fontsize=9)
         print(f"  axis {lbl}: slope={a:.3f} intercept={b:+.3f} N  R2={r2:.4f}")
