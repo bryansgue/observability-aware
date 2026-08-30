@@ -511,7 +511,7 @@ bound below retains: two windows with the same $\tilde\sigma$ but different thru
 levels, or different accelerometer noise, carry different absolute Fisher
 information. We therefore keep the two roles apart throughout: $\tilde\sigma$ is the
 dimensionless \emph{classification} signal that decides the regime, and
-$\sigma/r_s$ is the \emph{information content} that bounds the estimate;
+$\sigma/r_s$ is the \emph{information content} that lower-bounds the variance;
 Section~\ref{sec:sens} reports both side by side for every regime flown.
 
 \begin{proposition}\label{prop:hover}
@@ -669,14 +669,16 @@ $\sigma=\tilde\sigma_{\min}N(mg)^2$, the Cram\'er--Rao bound reads
 \end{equation}
 With the parameters used in the experiments ($\tilde\sigma_{\min}=0.009$,
 $N=100$, $r_s=0.5$; Section~\ref{sec:setup}) this is \SI{7.6}{\percent} for one second of data and
-\SI{2.4}{\percent} after ten. The bound is a floor, not a guarantee, but it
-states what the threshold admits: a window below it could not resolve the mass,
-even with an efficient estimator, to better than the \SIrange{5}{7}{\percent}
-hover bias the gate guards against (Section~\ref{sec:results}), so letting it
-update the mass could only trade one error for a larger one; and at least ten
-seconds of admissible data are needed before the floor falls below the
-\SI{3.3}{\percent} residual the gate leaves in the windy hover
-(Section~\ref{sec:results}). The estimator uses
+\SI{2.4}{\percent} after ten. The bound is a floor, not a guarantee: for a
+one-second window at or below the threshold, even an efficient unbiased
+estimator could not attain a standard deviation smaller than \SI{7.6}{\percent},
+which is of the scale of the \SIrange{5}{7}{\percent} hover bias the gate guards
+against (Section~\ref{sec:results}). Under the same ideal constant-force
+assumptions, the floor crosses the \SI{3.3}{\percent} residual observed in the
+windy hover after approximately \SI{5.3}{\second} of accumulated admissible data
+and reaches \SI{2.4}{\percent} after ten seconds. These figures characterize only
+the best-case variance permitted by the information; they neither predict nor
+upper-bound the realized estimation error. The estimator uses
 $\tilde\sigma$ to decide when to trust the mass, and the controller of
 Section~\ref{sec:nmpc} uses it to decide when to excite.
 
@@ -951,7 +953,7 @@ unidentifiable direction. The same identifiability that gates the estimate now
 information on the mass, so the probe that maximizes it (approximately, its
 dimensionless form $\tilde\sigma$, since the probe perturbs the thrust energy
 only to second order about $T\approx mg$) per unit deviation
-minimizes the mass uncertainty. We do not solve the continuous
+maximizes the corresponding best-case information on the mass. We do not solve the continuous
 optimal-input-design problem~\cite{mehra1974optimal}, nor the flight-test
 input design of~\cite{morelli2022inertia}; instead we maximize
 $\tilde\sigma$ over a small two-parameter probe family by an empirical sweep, the
@@ -982,13 +984,14 @@ protects the mass. This is the active
 counterpart of the gate.
 
 \subsection{Remarks on closed-loop behavior}
-The model error reaching the controller stays bounded. The uncompensated force is
-the estimation residual $\vect{d}-\hat{\vect{d}}$, small because $\vect{d}$ is
-identifiable throughout, and the mass enters only as the multiplicative thrust
-scaling $\tfrac{\hat m}{m}$, whose error is bounded by \eqref{eq:crb} where the mass is
-identifiable and frozen at its identification value where it is not. A formal
-stability analysis of the coupled estimator--controller loop is left to future
-work.
+In the evaluated runs, the model error reaching the controller remains small.
+The uncompensated force is the estimation residual
+$\vect{d}-\hat{\vect{d}}$, and the mass enters only as the multiplicative thrust
+scaling $\tfrac{\hat m}{m}$. Equation~\eqref{eq:crb} lower-bounds the variance
+attainable where the mass is identifiable; where it is not, the gate freezes the
+mass at its last identified value. Neither statement is an upper bound on the
+realized estimation error. A formal stability or boundedness analysis of the
+coupled estimator--controller loop is left to future work.
 
 % ════════════════════ EXPERIMENTAL SETUP ════════════════════
 \section{Experimental Setup}\label{sec:setup}
@@ -1160,15 +1163,15 @@ shows the slope holding above \num{0.8} up to about \SI{2}{\newton} and then fal
 bandwidth, so the usable full scale is set by how quickly the disturbance varies, a
 limitation a higher-order force model would relax.
 
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figs/fig_calib.png}
+\includegraphics[width=\columnwidth]{figs/fig_calib.png}
 \caption{Calibration curve under a sinusoidal wind: estimated force against
 applied force for the (a) $x$, (b) $y$, and (c) $z$ axes, with the linear fit
 (slopes \num{0.98}, \num{0.97}, \num{0.96}; $R^2$ \num{0.90}, \num{0.89},
 \num{0.87}) and the ideal unit slope.}
 \label{fig:calib}
-\end{figure*}
+\end{figure}
 
 \subsection{Mass identification and its hover limit}
 Given excitation and no confounding disturbance, the mass is identified
@@ -1409,7 +1412,7 @@ bias), and the mass calibration from below \SI{1}{\percent} to at most
 one-to-one into the mass). The bias loads the force but barely the mass, while the
 scale and thrust errors load the mass through the $\tfrac{T}{m}$ term, as expected; the
 near-linear degradation suggests that a one-time bench calibration of the bias
-and scale would remove most of it, which we have not tested.
+and scale may remove much of it, which we have not tested.
 
 \begin{figure}[t]
 \centering
@@ -1568,9 +1571,9 @@ the gate is therefore a window of \SIrange{1}{2}{\second}, a dwell of about
 erratic), $q_m\le10^{-5}$, $q_d\le10^{-2}$, and a threshold between the hover
 excursions and the probe level, with the probe budget as the lever that widens
 it. Transfer to other vehicles, thrust-to-weight ratios, and IMU grades is not
-established by one simulated platform; \eqref{eq:thrcrb} gives the rule to
-re-derive the threshold from $N$, $r_s$, and the mass uncertainty that can be
-tolerated.
+established by one simulated platform; \eqref{eq:thrcrb} provides a necessary
+best-case information condition, not a sufficient accuracy guarantee, for
+selecting a threshold from $N$, $r_s$, and the desired mass uncertainty.
 
 \begin{table}[t]
 \centering
