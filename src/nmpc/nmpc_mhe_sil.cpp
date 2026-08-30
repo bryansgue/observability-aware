@@ -58,6 +58,8 @@ static constexpr double TAU_HAT_INIT = 0.03;  // [s]
 static constexpr double SIGMA_GATE   = 0.05;  // inject θ̂ only when σ_k below this
 static constexpr double EMA_ALPHA_PARAM = 0.995; // mass + τ_rc (heavier smoothing)
 static constexpr double EMA_ALPHA_DIST  = 0.92;  // disturbances (τ≈0.12s)
+// Raw IMU log (sim-environment diagnostics): body accel + world specific force fed to the estimators.
+static std::vector<double> g_log_imu[6];
 
 // ── Extended CSV (same layout as mhe_mpcc_sil for plot reuse) ────────────────
 static void save_csv_extended(
@@ -99,7 +101,7 @@ static void save_csv_extended(
         << "gx,gy,gz,tauext_x,tauext_y,tauext_z,"
         << "m_ekf,dx_ekf,dy_ekf,dz_ekf,"
         << "px_ekf,py_ekf,pz_ekf,vx_ekf,vy_ekf,vz_ekf,"
-        << "m_ekfg,sigma_m\n";
+        << "m_ekfg,sigma_m,ax_imu,ay_imu,az_imu,sx,sy,sz\n";
 
     int n = res.n_steps;
     for (int i = 0; i < n; ++i) {
@@ -131,7 +133,9 @@ static void save_csv_extended(
             << "," << safe(log_dy_ekf) << "," << safe(log_dz_ekf)
             << "," << safe(log_px_ekf) << "," << safe(log_py_ekf) << "," << safe(log_pz_ekf)
             << "," << safe(log_vx_ekf) << "," << safe(log_vy_ekf) << "," << safe(log_vz_ekf)
-            << "," << safe(log_m_ekfg) << "," << safe(log_sigma_m) << "\n";
+            << "," << safe(log_m_ekfg) << "," << safe(log_sigma_m)
+            << "," << safe(g_log_imu[0]) << "," << safe(g_log_imu[1]) << "," << safe(g_log_imu[2])
+            << "," << safe(g_log_imu[3]) << "," << safe(g_log_imu[4]) << "," << safe(g_log_imu[5]) << "\n";
     }
 }
 
@@ -298,6 +302,9 @@ int main(int argc, char** argv)
     const double ACCEL_SCALE  = envd("ACCEL_SCALE", 1.0);   // accelerometer scale-factor
     const double ACCEL_BIAS   = envd("ACCEL_BIAS",  0.0);   // accelerometer bias [m/s^2]
     const double THRUST_SCALE = envd("THRUST_SCALE",1.0);   // thrust-coefficient mismatch
+    const double ACCEL_NOISE  = envd("ACCEL_NOISE", 0.0);   // extra white accel noise std [m/s^2] (sensitivity study)
+    std::mt19937 accel_rng(12345u + (unsigned)getpid());
+    std::normal_distribution<double> accel_nd(0.0, 1.0);
     if (outlier_mode)
         RCLCPP_WARN(muj->get_logger(), "[OUTLIER] rate=%.3f mag=%.1f m/s^2 v=%.2f m/s (estimators only)",
                     OUTLIER_RATE, OUTLIER_MAG, OUTLIER_V);
@@ -454,7 +461,10 @@ int main(int argc, char** argv)
                 // sensor lives or dies by, which the ideal sim does not exercise.
                 sf_meas *= ACCEL_SCALE;                     // accelerometer scale-factor
                 sf_meas += Vec3(ACCEL_BIAS, ACCEL_BIAS, ACCEL_BIAS);  // accelerometer bias [m/s^2]
+                if (ACCEL_NOISE > 0.0)
+                    sf_meas += ACCEL_NOISE * Vec3(accel_nd(accel_rng), accel_nd(accel_rng), accel_nd(accel_rng));
                 T_in    *= THRUST_SCALE;                    // thrust-coefficient mismatch
+                for (int j = 0; j < 3; ++j) { g_log_imu[j].push_back(ds.accel(j)); g_log_imu[3+j].push_back(sf_meas(j)); }
 
                 Eigen::Matrix<double,6,1> y_k; y_k << ds.pos, ds.vel;  // NOISY odom
 
@@ -495,7 +505,7 @@ int main(int argc, char** argv)
                 // Active observability-aware control: accrue observable time when the
                 // mass gate is OPEN; once enough accrues, the mass is "identified".
                 if (!ekf_g.gate_active()) observ_time += dt_ctrl;
-                if (observ_time > 6.0) mass_identified = true;   // enough excitation to fully converge
+                if (observ_time > envd("PROBE_OPEN_TIME", 6.0)) mass_identified = true;   // gate-open time before the probe is withdrawn [s]
                 probe_active = probe_mode && !mass_identified;
                 mhe.push(y_k, T_in, a, sf_meas, fix ? 1.0 : 0.0);
                 auto mhe_tic = Clock::now();

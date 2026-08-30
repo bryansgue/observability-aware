@@ -3,11 +3,11 @@
 plot_trans.py — identify-then-protect transition figure (fig_trans.png).
 
 Reads "trans" runs (aggressive first half -> hover second half). Shows the mass
-estimate of the plain EKF vs. the observability-aware (gated) EKF over time, plus
+estimate of the plain EKF vs. the identifiability-aware (gated) EKF over time, plus
 the NORMALIZED identifiability sigma_tilde = sigma / sum(T^2) in [0,1]. During the
 aggressive phase both identify the mass; in hover the plain EKF corrupts it
 (vertical wind misread as a mass change, Prop. 1) while the gated EKF detects the
-loss of observability and freezes it.
+loss of identifiability and freezes it.
 
 If several seeded runs (results/trans_seed*.csv) are present they are aggregated as
 mean +/- std; otherwise the single demo file is used.
@@ -110,13 +110,14 @@ def main():
     ax1.axhline(M_TRUE, color="k", ls=":", lw=1.4, label=f"true mass ({M_TRUE} kg)")
     band(ax1, t, m_hat,  "#e08214", "-.", "MHE")
     band(ax1, t, m_ekf,  "#c0392b", "--", "plain EKF")
-    band(ax1, t, m_ekfg, "#1f77b4", "-",  "obs-aware EKF (ours)")
+    band(ax1, t, m_ekfg, "#1f77b4", "-",  "identifiability-aware EKF (ours)")
     ax1.set_ylabel("mass estimate [kg]")
     # title omitted — description and N go in the LaTeX caption (IEEE convention)
-    ax1.legend(loc="upper left", framealpha=0.95, ncol=2, fontsize=8.5)
-    ax1.text(t_switch*0.5, ax1.get_ylim()[1], "aggressive\n(observable)",
+    ax1.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), framealpha=0.95,
+               ncol=4, fontsize=8.5, borderaxespad=0)
+    ax1.text(t_switch*0.5, ax1.get_ylim()[1], "aggressive\n(identifiable)",
              ha="center", va="top", fontsize=9, color="0.35")
-    ax1.text((t_switch + t[-1])*0.5, ax1.get_ylim()[1], "hover\n(unobservable)",
+    ax1.text((t_switch + t[-1])*0.5, ax1.get_ylim()[1], "hover\n(unidentifiable)",
              ha="center", va="top", fontsize=9, color="0.35")
 
     band(ax2, t, sn, "#117a65", "-", None)

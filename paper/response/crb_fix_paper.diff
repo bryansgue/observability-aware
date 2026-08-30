@@ -1,0 +1,115 @@
+--- /tmp/claude-1000/-home-bryansgue-robotics-controller-ws-src-Observability-Aware/ec0e2119-592a-4ace-a19a-44eb8ffa0088/scratchpad/paper_before_crb_fix.tex	2026-08-30 15:43:12.614175704 -0300
++++ paper_access.tex	2026-08-30 15:43:12.629175737 -0300
+@@ -600,11 +600,13 @@
+ the random walk more freedom to absorb the slow variations of $T\vect{a}$.
+ Proposition~\ref{prop:crb} is thus an optimistic bound for the implemented
+ filter; Section~\ref{sec:sens} shows that the random-walk bound accounts for most
+-of the gap between it and the empirical spread of the estimate. The gate is not
+-affected by the approximation: it thresholds the dimensionless $\tilde\sigma$ as a
+-regime classifier with an empirical margin, and at hover $\sigma_{\mathrm{eff}}$
+-stays at the noise floor for every $q_d$, so the separation between the regimes
+-survives (Section~\ref{sec:sens}).
++of the gap between it and the empirical spread of the estimate. For the
++disturbance profiles (steps and sinusoid) and the range of $q_d$ evaluated, the
++gate decision is unaffected by the approximation: it thresholds the dimensionless
++$\tilde\sigma$ as a regime classifier with an empirical margin, and at hover
++$\sigma_{\mathrm{eff}}$ stays at the noise floor for every $q_d$ tested, so the
++separation between the regimes survives (Section~\ref{sec:sens}); we did not
++sweep the physical bandwidth of the disturbance separately.
+ 
+ \emph{Exact information under the random-walk force model.} Stack the compensated specific forces of the window as
+ $\vect{S}=[\tilde{\vect{s}}_1^{\!\top},\dots,\tilde{\vect{s}}_N^{\!\top}]^{\!\top}\in\R^{3N}$,
+@@ -657,20 +659,23 @@
+ $\tilde\sigma_{\min}$ holds across maneuvers; $\sigma$ carries the information
+ content and $\tilde\sigma$ carries the decision. The threshold is set with margin
+ between the hover and maneuver values of $\tilde\sigma$ (Section~\ref{sec:sens}),
+-and Proposition~\ref{prop:crb} translates it into an allowable mass variance.
+-Over a window of $N$ samples near hover thrust, $\sum_k T_k^2\approx N(mg)^2$, so
+-a window that just opens the gate carries $\sigma=\tilde\sigma_{\min}N(mg)^2$ and
+-bounds the mass, per window, to
++and Proposition~\ref{prop:crb} translates it into the best resolution that the
++admitted data could give. Over a window of $N$ samples near hover thrust,
++$\sum_k T_k^2\approx N(mg)^2$, so for a window that just opens the gate,
++$\sigma=\tilde\sigma_{\min}N(mg)^2$, the Cram\'er--Rao bound reads
+ \begin{equation}
+ \frac{\mathrm{std}(\hat m)}{m}\ \gtrsim\ \frac{1}{g}\sqrt{\frac{r_s}{\tilde\sigma_{\min}\,N}}\,.
+ \label{eq:thrcrb}
+ \end{equation}
+ With the parameters used in the experiments ($\tilde\sigma_{\min}=0.009$,
+ $N=100$, $r_s=0.5$; Section~\ref{sec:setup}) this is \SI{7.6}{\percent} for one second of data and
+-\SI{2.4}{\percent} after ten: every window that opens the gate carries at least
+-as much information as the \SIrange{5}{7}{\percent} hover bias it guards against
+-(Section~\ref{sec:results}), and ten seconds of admissible data bound the mass below
+-the \SI{3.3}{\percent} that the gate holds across the windy hover
++\SI{2.4}{\percent} after ten. The bound is a floor, not a guarantee, but it
++states what the threshold admits: a window below it could not resolve the mass,
++even with an efficient estimator, to better than the \SIrange{5}{7}{\percent}
++hover bias the gate guards against (Section~\ref{sec:results}), so letting it
++update the mass could only trade one error for a larger one; and at least ten
++seconds of admissible data are needed before the floor falls below the
++\SI{3.3}{\percent} residual the gate leaves in the windy hover
+ (Section~\ref{sec:results}). The estimator uses
+ $\tilde\sigma$ to decide when to trust the mass, and the controller of
+ Section~\ref{sec:nmpc} uses it to decide when to excite.
+@@ -932,9 +937,8 @@
+ uses $N_c=31$ nodes over a \SI{1.5}{\second} horizon at \SI{100}{\hertz}, with a
+ per-step solve time below \SI{1}{\milli\second}. All timings in this paper are
+ measured on a laptop-class processor (Intel Core Ultra~9 275HX, one core per
+-solver), not on an embedded flight computer; the sub-millisecond budget leaves a
+-several-fold margin for an ARM-class companion computer at \SI{100}{\hertz}, but
+-that port has not been made.
++solver), not on an embedded flight computer; the method has not been validated
++on embedded hardware.
+ 
+ \subsection{Active excitation}\label{sec:active}
+ The gate of Section~\ref{sec:gate} protects a mass that has already been
+@@ -969,9 +973,12 @@
+ Section~\ref{sec:results}. The
+ probe is triggered only while the mass is both needed and unidentifiable, and it
+ is withdrawn once the gate has been open for a total of $t_p$ seconds
+-(Table~\ref{tab:params}); with $t_p=\SI{15}{\second}$ and the probe's
+-$\tilde\sigma$ of \SI{0.048}{}, \eqref{eq:thrcrb} bounds the mass to about
+-\SI{1}{\percent} at withdrawal. The gate then again protects the mass. This is the active
++(Table~\ref{tab:params}). The value $t_p=\SI{15}{\second}$ is an empirical
++choice, validated in the five repetitions of Section~\ref{sec:results}, where the
++estimate has settled by then; for reference, the constant-force bound
++\eqref{eq:thrcrb} for the information the probe accumulates in that time is about
++\SI{1}{\percent}, the order of the residual observed. The gate then again
++protects the mass. This is the active
+ counterpart of the gate.
+ 
+ \subsection{Remarks on closed-loop behavior}
+@@ -1401,8 +1408,8 @@
+ \SI{11.5}{\percent} (under a \SI{10}{\percent} thrust mismatch, which couples almost
+ one-to-one into the mass). The bias loads the force but barely the mass, while the
+ scale and thrust errors load the mass through the $\tfrac{T}{m}$ term, as expected; the
+-near-linear degradation indicates the calibration error is recoverable by a
+-one-time bench calibration of the bias and scale.
++near-linear degradation suggests that a one-time bench calibration of the bias
++and scale would remove most of it, which we have not tested.
+ 
+ \begin{figure}[t]
+ \centering
+@@ -1453,8 +1460,8 @@
+ the fastest trajectory, and the probe sits well above the threshold, as intended.
+ The information content $\sigma/r_s$ spans three orders of magnitude over the same
+ regimes because it retains the thrust level; the last column converts it through
+-Proposition~\ref{prop:crb} into the mass uncertainty that one second of data
+-bounds. The probe, at $\tilde\sigma=0.048$, carries per second the information of a
++Proposition~\ref{prop:crb} into the lower bound on the mass standard deviation
++that one second of data could achieve. The probe, at $\tilde\sigma=0.048$, carries per second the information of a
+ flight between \SI{3.8}{} and \SI{6.1}{\meter\per\second}; because all the
+ near-hover regimes share the same thrust level, $\tilde\sigma$ and $\sigma/r_s$
+ rank them identically here, but the table makes explicit that equal
+@@ -1465,8 +1472,9 @@
+ \centering
+ \caption{Classification signal against information content, per regime, over
+ \SI{1}{\second} windows (median over the runs of Table~\ref{tab:id}; probe:
+-gate-open windows of Fig.~\ref{fig:active}). Last column: mass uncertainty that
+-one window bounds by Proposition~\ref{prop:crb}.}
++gate-open windows of Fig.~\ref{fig:active}). Last column: Cram\'er--Rao lower
++bound on the mass standard deviation from one window (Proposition~\ref{prop:crb}),
++the best resolution the window could give.}
+ \label{tab:info}
+ \begin{tabular}{lccc}
+ \toprule

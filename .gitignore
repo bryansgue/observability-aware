@@ -28,3 +28,9 @@ paper/*.out
 paper/*.bbl
 paper/*.blg
 paper/*.synctex.gz
+build_dbg/
+MUJOCO_LOG.TXT
+scripts/MUJOCO_LOG.TXT
+texput.log
+paper/response/revised_paper.txt
+paper/latexdiff.log

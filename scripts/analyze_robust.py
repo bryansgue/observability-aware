@@ -14,8 +14,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 plt.rcParams.update({
-    "font.family": "serif", "font.size": 10.5, "axes.labelsize": 11,
-    "legend.fontsize": 9, "figure.dpi": 200, "lines.linewidth": 1.8,
+    "font.family": "serif", "font.size": 8, "axes.labelsize": 8,
+    "legend.fontsize": 7.5, "figure.dpi": 200, "lines.linewidth": 1.8,
     "axes.grid": True, "grid.alpha": 0.25, "grid.linestyle": "--", "savefig.bbox": "tight",
 })
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "results")
@@ -61,24 +61,28 @@ def main():
     for tag, (fa, me) in data.items():
         print(f"{tag:>6} {fa:9.3f} {me:7.1f}")
 
-    fig, axs = plt.subplots(1, 3, figsize=(10.5, 3.3))
+    fig, axs = plt.subplots(3, 1, figsize=(3.5, 3.6))
     sweeps = [("bias", "accelerometer bias [m/s$^2$]"),
               ("scale", "accel scale-factor error [%]"),
               ("thrust", "thrust mismatch [%]")]
-    for ax, (sw, xlab) in zip(axs, sweeps):
+    for k, (ax, (sw, xlab)) in enumerate(zip(axs, sweeps)):
+        ax.set_title(f"({chr(97+k)})", fontsize=8, loc="center", pad=1)
         xs = [0.0] + sorted(v for t, (s, v) in CFG.items() if s == sw and t in data)
         tags = ["base"] + [t for t, (s, v) in sorted(CFG.items(), key=lambda kv: kv[1][1])
                            if s == sw and t in data]
         fa = [data[t][0] for t in tags]; me = [data[t][1] for t in tags]
-        ax.plot(xs, fa, "o-", color="#1f77b4", label="force error [N]")
+        ax.plot(xs, fa, "o-", color="#1f77b4", ms=3, lw=1.1, label="force error [N]")
         ax.set_xlabel(xlab); ax.set_ylabel("force abs. error [N]", color="#1f77b4")
         ax.tick_params(axis="y", labelcolor="#1f77b4")
         ax2 = ax.twinx()
-        ax2.plot(xs, me, "s--", color="#c0392b", label="mass error [%]")
+        ax2.plot(xs, me, "s--", color="#c0392b", ms=3, lw=1.1, label="mass error [%]")
         ax2.set_ylabel("mass error [%]", color="#c0392b")
         ax2.tick_params(axis="y", labelcolor="#c0392b")
         ax2.grid(False)
-    fig.tight_layout()
+        from matplotlib.ticker import MaxNLocator
+        ax.yaxis.set_major_locator(MaxNLocator(4)); ax2.yaxis.set_major_locator(MaxNLocator(4)); ax.xaxis.set_major_locator(MaxNLocator(5))
+        ax.set_ylabel("force error [N]", color="#1f77b4"); ax2.set_ylabel("mass error [%]", color="#c0392b")
+    fig.tight_layout(h_pad=0.5)
     out = os.path.join(RES, "fig_robust.png")
     fig.savefig(out, dpi=300)
     print(f"[OK] {out}")

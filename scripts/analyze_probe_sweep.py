@@ -43,10 +43,13 @@ def snorm_mean(d, c):
     return np.median(sn) if sn else np.nan
 
 
+PREFIX = os.environ.get("PROBE_PREFIX", "probe_")     # probe08_ for the rho=0.8 sweep
+OUT = os.environ.get("PROBE_OUT", "fig_probe_opt.png")
+
 def main():
     rows = []
     for tag in ORDER:
-        files = sorted(glob.glob(os.path.join(RES, f"probe_{tag}_seed*.csv")))
+        files = sorted(glob.glob(os.path.join(RES, f"{PREFIX}{tag}_seed*.csv")))
         if not files: continue
         sn, err = [], []
         for f in files:
@@ -66,7 +69,7 @@ def main():
     err = np.array([r[2] for r in rows]); es = np.array([r[3] for r in rows])
     opt = int(np.argmax(sig))
 
-    fig, ax = plt.subplots(figsize=(7.0, 4.2))
+    fig, ax = plt.subplots(figsize=(7.0, 3.3))
     cols = ["#1f77b4", "#2ca02c", "#9467bd", "#8c564b", "#e08214"]
     for i, tag in enumerate(tags):
         ax.errorbar(sig[i], err[i], yerr=es[i], fmt="o", ms=8, color=cols[i % len(cols)],
@@ -77,8 +80,10 @@ def main():
                label="most informative")
     ax.set_xlabel(r"achieved identifiability $\tilde\sigma$ (probe)")
     ax.set_ylabel("mass recovery error [%]")
-    ax.legend(loc="upper center", ncol=3, framealpha=0.95, fontsize=9)
-    out = os.path.join(RES, "fig_probe_opt.png")
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=6,
+              framealpha=0.95, fontsize=7.5, borderaxespad=0,
+              columnspacing=1.0, handletextpad=0.4)
+    out = os.path.join(RES, OUT)
     fig.savefig(out, dpi=300)
     print(f"[OK] {out}")
     print(f"\ninfo-optimal = {NICE[tags[opt]]}: sigma_t={sig[opt]:.4f}, err={err[opt]:.1f}% "

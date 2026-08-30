@@ -189,18 +189,19 @@ private:
     bool   gate_now_  = false;
     double sigma_thr_ = 0.0;
     int    high_count_ = 0;                // consecutive steps with sigma_m > thr
-    static const int WIN_     = 100;       // sigma_m window (1 s) — long enough to span a probe cycle
-    static const int SUSTAIN_ = 25;        // steps of sustained excitation to open the gate (~0.25 s):
+    // sigma window (1 s) and dwell (~0.25 s) — env-overridable for the sensitivity study
+    const int WIN_     = (int)env_("EKF_WIN",   100);   // sigma_m window [steps] — spans a probe cycle
+    const int SUSTAIN_ = (int)env_("EKF_DWELL", 25);    // steps of sustained excitation to open the gate:
                                            // rejects isolated sigma spikes while letting the sustained
                                            // active probe re-open the gate quickly enough to identify.
     // measurement covariances (matched to MHE weights)
     static constexpr double R_p_ = 1.0 / 50.0;
     static constexpr double R_v_ = 1.0 / 10.0;
-    static constexpr double R_s_ = 1.0 / 2.0;
     // process noise (per step) — env-overridable for fair tuning vs the MHE
     static double env_(const char* k, double def) {
         const char* v = std::getenv(k); return v ? std::atof(v) : def;
     }
+    const double R_s_ = env_("EKF_RS", 1.0 / 2.0);   // accelerometer variance (env-overridable)
     const double q_p_ = 1e-6;
     const double q_v_ = 1e-3;
     const double q_m_ = env_("EKF_QM", 1e-5);   // matched to MHE mass process noise

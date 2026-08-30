@@ -39,7 +39,7 @@ def main():
     c = {n: i for i, n in enumerate(h)}
     t = d[:, c["t"]]
 
-    fig, ax = plt.subplots(figsize=(7.0, 3.8))
+    fig, ax = plt.subplots(figsize=(7.0, 2.9))
     ax.axhline(M_TRUE, color="k", ls=":", lw=1.4, label=f"true mass ({M_TRUE} kg)")
     ax.plot(t, d[:, c["m_ekf"]], color="#1f77b4", ls="-",
             label="EKF mass estimate")

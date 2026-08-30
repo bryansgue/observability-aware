@@ -6,7 +6,7 @@ Reuses the rejection battery (results/bat_*.csv). The mass is a free state in th
 MHE in every run, so both feedforward and baseline runs are pooled per speed.
 The figure shows the steady-state mass estimate (mean ± std) against the measured
 peak speed, with the true mass as a reference line. The key observation is that
-the estimate band SHRINKS with excitation: at hover the mass is weakly observable
+the estimate band SHRINKS with excitation: at hover the mass is weakly identifiable
 (Proposition 1, mass-d_z ambiguity) so the estimate is loose, while an agile
 flight excites the dynamics and sharpens it.
 
@@ -102,7 +102,7 @@ def main():
     # mixing it here would conflict with the transition figure.
     ax.errorbar(xpos, m_mean, yerr=m_std, marker="o", ms=5.5, color="#c0392b",
                 ls="--", mec="white", mew=0.6, capsize=2.5, capthick=1.0,
-                elinewidth=1.0, zorder=3, label=r"ungated EKF (observability probe)")
+                elinewidth=1.0, zorder=3, label=r"ungated EKF")
     for x, mm, ss in zip(xpos, m_mean, m_std):
         ax.annotate(rf"$\pm${ss*1000:.0f} g", xy=(x, mm + ss),
                     xytext=(0, 6), textcoords="offset points",
@@ -110,11 +110,14 @@ def main():
 
     ax.set_xlabel("peak speed [m/s]")
     ax.set_ylabel("mass estimate [kg]")
+    # headroom so the top "$\pm$g" annotation stays inside the frame
+    ax.set_ylim(top=ax.get_ylim()[1] + 0.012)
     # title omitted — info in caption
     ticks = list(xpos)
     labels = ["hover" if abs(t) < 1e-6 else f"{round(t)}" for t in ticks]
     ax.set_xticks(ticks); ax.set_xticklabels(labels)
-    ax.legend(loc="lower right", framealpha=0.95)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=2,
+              framealpha=0.95, borderaxespad=0)
     # N (and the N=9 hover note) stated in the LaTeX caption, not on canvas.
 
     fig.savefig(out, dpi=300)

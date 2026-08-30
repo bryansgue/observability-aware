@@ -108,7 +108,7 @@ def main():
     nf_m, nf_s = np.array(nf_m), np.array(nf_s)
     N = int(np.median(n_used))
 
-    fig, ax = plt.subplots(figsize=(7.0, 4.0))
+    fig, ax = plt.subplots(figsize=(7.0, 3.1))
     C_BASE, C_FF = "#c0392b", "#1f77b4"
 
     ax.fill_between(xpos, ff_m, nf_m, color=C_FF, alpha=0.08, zorder=1)
@@ -136,7 +136,8 @@ def main():
     labels = ["hover" if abs(t) < 1e-6 else f"{round(t)}" for t in ticks]
     ax.set_xticks(ticks); ax.set_xticklabels(labels)
 
-    ax.legend(loc="upper left", framealpha=0.95)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=2,
+              framealpha=0.95, borderaxespad=0)
     # explanatory text (rejection shrinks with speed) is in the LaTeX caption
 
     fig.savefig(out, dpi=300)

@@ -1,0 +1,49 @@
+Reviewer: 1
+This manuscript presents an observability-aware virtual force-sensing framework for quadrotors. The main idea is to estimate the external specific force from the accelerometer residual, identify the vehicle mass only when sufficient excitation is available, freeze the mass update during poorly observable flight, and introduce an active excitation maneuver when recalibration is required. The use of the Schur complement as a common signal for mass-identifiability assessment, estimator gating, and probe selection is technically interesting. The manuscript is generally well organized, and the software-in-the-loop results indicate meaningful improvements in mass-estimation consistency and disturbance rejection.
+The manuscript acknowledges that parameter-update freezing, persistent-excitation tests, and active input design are individually classical. The claimed contribution is that the same Schur-complement quantity governs gating and active excitation. This is potentially useful, but the distinction from existing covariance-management methods, Fisher-information-based input design, active system identification, and dual-control approaches remains qualitative. The introduction should include a more systematic comparison explaining what existing methods measure, what signal they use for gating, whether they consider the mass–external-force ambiguity, and whether they actively restore observability. A comparison table would make the methodological contribution considerably clearer.
+Equations (8)–(12) treat the external specific force (d) as constant over the information window. In the EKF, however, (d) is modeled as a random walk, and in the simulations it includes wind and unmodeled aerodynamic drag. If (d) varies appreciably over the window, it can absorb changes associated with (T a/m), and the Schur complement derived for a constant nuisance parameter is no longer the exact marginal Fisher information of the implemented model. The authors should either extend the derivation to the stochastic time-varying disturbance model or quantify the approximation error as a function of window length, disturbance bandwidth, and (q_d). This point is important because the proposed gate is justified directly through the Fisher-information interpretation.
+The quantity (\sigma) is the dispersion of the thrust vectors (T_k a_k), not merely the dispersion of the thrust direction. It may become positive through changes in thrust magnitude, changes in direction, or both. Several passages describe (\tilde{\sigma}) primarily as a measure of directional excitation, which is incomplete. More importantly, normalizing by (\sum T_k^2) removes the overall thrust scale, but it also removes information relevant to the actual Cramér–Rao bound. Two maneuvers may have the same (\tilde{\sigma}) while providing different absolute Fisher information because of different thrust magnitudes or accelerometer-noise levels. The manuscript should distinguish clearly between the normalized classification signal and the actual information content.
+The manuscript states that one normalized threshold works across the tested maneuvers. This is useful within the reported simulation environment, but it does not establish that the threshold will transfer across vehicles, thrust-to-weight ratios, IMU noise levels, sample rates, window lengths, or attitude-estimation quality. The authors should provide a threshold-sensitivity study covering at least the information-window duration, dwell time, process noise, measurement noise, and maneuver intensity. It would also be helpful to relate the threshold to an allowable mass-estimation variance through the Cramér–Rao bound rather than selecting it solely from separation between hover and maneuver data.
+5) Are there references that are not appropriate for the topic being discussed?: Yes. 5a) If yes, then please indicate which references should be removed.: (blank)
+
+Reviewer: 2
+The paper could possibly benefit from a comment on the validity of using an EKF wrt. the levels of non-linearity (if local linearization is sufficient), and under what scenarios (rapid motion, rotated frames) it could be less applicable.
+
+Reviewer: 3
+Summary: The work in this paper addresses the challenge of identifying force and mass parameters in a quadrotor when identifiability requirements are not always met due to operational constraints in hover. ... With some minor revisions, the work is suitable for publication.
+Key point
+• The authors in many places, including the title, interchangeably use the terms "observability" and "identifiability". The work in this paper specifically addresses identifiability, not observability. The two concepts are closely linked, but they are not the same. The terms "observability" should be replaced with "identifiability".
+• For work addressing observability of mass in this type of system, the authors may wish to refer to: B. Boyacioglu, D. Sandursky, and K. A. Morgansen, "Nonlinear estimation of rigid body inertial parameters," 2023 AIAA Scitech, https://doi.org/10.2541/6.2023-1809.
+Minor points
+• In the introduction (p. 1, line 46), one should note that mass is not a force. Mass with gravity is a force.
+• The result on page 4 in Equation (12) could be stated as a Proposition as it has been mathematically proved here.
+• On p. 6, lines 17-20, comments are made about smoothing the estimate. Please comment on why the result of the estimator is not providing a sufficiently smoothed result.
+• On page 6, Section V.B, the reader would benefit from some of the recent(ish) work on optimal excitation for identifiability, particularly in flight systems. One suggestion would be E. A. Morelli, "Determining aircraft moments of inertia from flight test data," AIAA Journal of Guidance, Control, and Dynamics, Jan. 2022, 45(1):4-14, https://doi.org/10.2514/1.G006072.
+• Page 9, Figure 8, a somewhat longer timeline would be helpful to show a bit more of the behavior of the mass estimate after the active probe region. Maybe also a bit more within the active probe region to show that the value is staying at the nominal value rather than passing through and continuing on.
+Typographical/formatting notes
+• Sentences that start with "Fig." should be changed to "Figure". (e.g., p. 2, line 53)
+• Page 3, line 6, "Section VIII concludes." should perhaps be changed to "Section VIII concludes the paper."
+• Page 3, line 30, "body rate" is more appropriately denoted "body attitude rate".
+• Page 4, line 23, remove the comma after "separated"
+• Page 4, line 31, add a comma after "mass"
+• Page 4, line 40, capitalize Newtons
+• Page 4, line 47, the term "Dividing out" could be changed to "Normalizing by"
+• Page 7, line 1, Table 2 should appear on the page where it was first mentioned (or the page immediately after). Ideally, page 6 rather than page 7.
+• Page 8, Figure 4, the font size in figures should be roughly the same as the caption font size. Potentially the headers on the plots could be incorporated into the caption as well.
+• Page 11, Figure 13, same comments as for Figure 4.
+
+Reviewer: 4
+1. Report the compute platform for the "<1 ms per step at 100 Hz" real-time claim, and if it's not an embedded/flight-representative processor, say so.
+2. Consider adding a sentence on why the injected-error ranges in Section VII-H (0.4 m/s² accel bias, 10% scale/thrust error) were chosen.
+3. Clarify the d_z correlation degradation with speed (Table 3).
+
+Reviewer: 5
+1. In Innovation 1, the authors state that "the mass and the vertical external force are not jointly observable in near-hover flight, and we derive an online identifiability measure." This description seems more like an external disturbance estimation method. What is the fundamental difference between the proposed method and existing approaches using an Extended State Observer (ESO) or an Unknown Disturbance Observer (UDO)?
+2. In Innovation 2, the authors state that the estimation is "protected when unobservable so the reading is protected during hover." How is unobservability quantitatively defined in this work? What criterion is used to determine whether the system is in an unobservable condition?
+3. In Equation (1), the dynamic model contains many specific physical parameters. How can the authors guarantee the accuracy of the calibration or identification of each parameter?
+4. In Equation (12), the authors state that the inverse mass parameter β has boundedness and emphasize this as one of the contributions in Innovation 1. However, this property is not experimentally validated; it is only briefly mentioned in the text. Could the authors provide experimental verification to support this claim?
+5. At the end of Page 5, what exactly does the term "probe" refer to? I could not clearly understand its meaning. Is it a physical sensor or another type of measurement device?
+6. Regarding the optimization function in Equation (16), does the objective function require normalization? Since different terms may have significantly different magnitudes, one dominant term may overwhelm the others, making the variations of smaller terms insignificant.
+7. Regarding Equation (16), the optimization objective is provided, but the final controller expression is not explicitly given. Is this formulation complete and reasonable, considering that the section is titled "V. CLOSED-LOOP USE: CONTROL AND ACTIVE CALIBRATION"?
+8. If all physical parameters are accurately known, according to the fundamental dynamic equation, would the difference between the kinetic energy generated by the robot output and the kinetic energy received by the robot directly represent the disturbance magnitude? Please clarify the conceptual difference between the proposed "virtual force sensing" approach and this intuitive interpretation.
+5) Are there references that are not appropriate for the topic being discussed?: Yes. 5a) (blank)

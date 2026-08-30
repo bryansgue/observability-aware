@@ -98,7 +98,7 @@ def main():
     xpos = np.array(xpos)
     N = int(np.median(n_used))
 
-    fig, ax = plt.subplots(figsize=(7.0, 4.0))
+    fig, ax = plt.subplots(figsize=(7.0, 3.1))
     style = [("$d_x$ (horizontal)", "#1f77b4", "o", "-"),
              ("$d_y$ (horizontal)", "#2ca02c", "s", "-"),
              ("$d_z$ (vertical)",   "#c0392b", "^", "-")]

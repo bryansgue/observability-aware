@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-plot_active.py — active observability-aware control demo (fig_active.png).
+plot_active.py — active identifiability-aware control demo (fig_active.png).
 
 Hover runs from a wrong mass prior (0.70 kg, true 1.05):
-  - passive (no probe): mass unobservable in hover -> frozen at the wrong prior.
-  - active (probe):      controller injects excitation -> mass becomes observable
+  - passive (no probe): mass unidentifiable in hover -> frozen at the wrong prior.
+  - active (probe):      controller injects excitation -> mass becomes identifiable
                          -> identified -> excitation stops -> estimate protected.
 
 Aggregates seeded runs results/active_{noprobe,probe}_seed*.csv as mean +/- std if
@@ -105,7 +105,8 @@ def main():
     ax1.set_ylabel("mass estimate [kg]")
     # title omitted — description and N go in the LaTeX caption (IEEE convention)
     ax1.set_ylim(0.6, 1.15)
-    ax1.legend(loc="center right", framealpha=0.95)
+    ax1.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=3,
+               framealpha=0.95, borderaxespad=0)
 
     band(ax2, tp, sp, "#117a65", "-", None)
     ax2.set_yscale("log")

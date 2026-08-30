@@ -61,8 +61,7 @@
 \title{Observability-Aware Virtual Force Sensing and
 Self-Calibration for Quadrotors}
 
-\author{Jos\'e~Varela-Ald\'as, Bryan~S.~Guevara, Ang\'elica~Carri\'on,
-and~Tiago~Nascimento}
+\author{Jos\'e~Varela-Ald\'as and Ang\'elica~Carri\'on}
 
 \maketitle
 
@@ -124,15 +123,15 @@ regression on inertial signals that recover the mass and inertia under physical
 consistency constraints~\cite{wuest2019online,wensing2017geometric}; these
 methods need excited flight to identify the inertial parameters. External-force
 estimation has a parallel line of work based on momentum
-observers~\cite{tomic2017external,ruggiero2014impedance}, which estimate the
+observers~\cite{tomic2017external,ruggiero2014impedance,yuksel2014nonlinear}, which estimate the
 force on the airframe from the dynamics but are biased by errors in the same
 parameters above. Moving-horizon estimation has been applied to quadrotor system
-identification~\cite{liu2023nonlinear}, building on the constrained-MHE
+identification~\cite{wang2023neuromhe}, building on the constrained-MHE
 theory~\cite{rao2003constrained}; the unmodeled aerodynamics that learned
 residual models capture are themselves an active
 area~\cite{bauersfeld2021neurobem,torrente2021data}. On the control side,
 adaptive and incremental schemes reject disturbances without an explicit force
-estimate~\cite{smeur2016adaptive}, and learning-based adaptive controllers fit a
+estimate~\cite{smeur2016adaptive,hanover2022performance,chen2016disturbance}, and learning-based adaptive controllers fit a
 disturbance representation online to reject wind in agile
 flight~\cite{oconnell2022neuralfly}. These methods cancel the disturbance but do
 not reason about \emph{when} the underlying parameters are identifiable.
@@ -176,7 +175,7 @@ identifiability signal $\tilde\sigma$.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{fig_system.png}
+\includegraphics[width=\columnwidth]{fig_system.pdf}
 \caption{Architecture of the self-calibrating virtual force sensor: the
 identifiability $\tilde\sigma$ gates the mass calibration and triggers the
 active probe; the NMPC feeds $\hat{\vect{d}}$ forward.}
@@ -247,7 +246,7 @@ $\mathcal{F}_W$ is the rotation matrix $\mat{R}(\vect{q})\in\SOg$, parameterized
 by the unit quaternion
 $\vect{q}=[q_0,\ \vect{q}_v^{\!\top}]^{\!\top}\in\mathbb{S}^3$, with
 $\mathbb{S}^3\triangleq\{\vect{q}\in\mathbb{H}:\norm{\vect{q}}=1\}$ following the
-convention of~\cite{sola2017quaternion}. The body rate $\vect{\omega}\in\R^3$ is
+convention of~\cite{shuster1993survey}. The body rate $\vect{\omega}\in\R^3$ is
 the angular velocity of $\mathcal{F}_B$ with respect to $\mathcal{F}_W$ expressed
 in $\mathcal{F}_B$. We write $[\cdot]_\times$ for the skew-symmetric operator
 that maps a vector to the matrix form of the cross product. The thrust acts
@@ -275,7 +274,7 @@ is a quadratic drag coefficient that lumps the dominant unmodeled
 aerodynamics~\cite{sun2022comparative}. The attitude kinematics \eqref{eq:dq} use
 the matrix
 $\mat{\Omega}(\vect{\omega})=\left[\begin{smallmatrix}0 & -\vect{\omega}^{\!\top}\\[2pt] \vect{\omega} & -[\vect{\omega}]_\times\end{smallmatrix}\right]$,
-following the convention of~\cite{sola2017quaternion,sola2018micro}. The body rate follows the
+following the convention of~\cite{shuster1993survey,barfoot2017state}. The body rate follows the
 first-order response \eqref{eq:dw} to the commanded rate
 $\vect{\omega}_{\text{cmd}}$, with time constant $\tau_{rc}$ for the inner-loop
 rate controller, while the collective thrust $T$ is commanded directly. The term
@@ -348,7 +347,7 @@ signals, so we analyze when the mass and the external force can be recovered
 from it. The drag term is a known function of the measured velocity, so we move
 it to the left-hand side and define the compensated specific force
 $\tilde{\vect{s}}\triangleq\vect{s}+c\,\norm{\vect{v}}\,\vect{v}$. With the
-inverse mass $\beta\triangleq 1/m$, \eqref{eq:imu} becomes
+inverse mass $\beta\triangleq m^{-1}$, \eqref{eq:imu} becomes
 \begin{equation}
 \tilde{\vect{s}} = T\,\vect{a}\,\beta + \vect{d}
                  = \mat{\Phi}\,\vect{\varphi},
@@ -464,10 +463,10 @@ The scalar $\sigma$ is therefore an online measure of how well the mass can be
 identified, read directly from the known thrust and attitude over the window with
 no extra sensing. It also has an estimation-theoretic meaning. With accelerometer
 noise of variance $r_s$, the joint Fisher information of $(\beta,\vect{d})$ over
-the window is $\mat{G}/r_s$ with $\mat{G}$ the Gramian \eqref{eq:gramian}. The
-$(1,1)$ block of its inverse is the inverse Schur complement, $[\mat{G}^{-1}]_{11}=1/\sigma$,
+the window is $\tfrac{\mat{G}}{r_s}$ with $\mat{G}$ the Gramian \eqref{eq:gramian}. The
+$(1,1)$ block of its inverse is the inverse Schur complement, $[\mat{G}^{-1}]_{11}=\sigma^{-1}$,
 so the \emph{marginal} Fisher information of the inverse mass $\beta$, after
-profiling out the jointly estimated force $\vect{d}$, is $\sigma/r_s$, and the
+profiling out the jointly estimated force $\vect{d}$, is $\tfrac{\sigma}{r_s}$, and the
 Cram\'er--Rao bound on any unbiased estimate is
 \begin{equation}
 \mathrm{var}(\hat\beta)\ \geq\ r_s\,[\mat{G}^{-1}]_{11}\,=\,r_s\,\sigma^{-1},
@@ -479,7 +478,7 @@ zero-mean accelerometer noise of isotropic covariance $r_s\mat{I}_3$ and a
 quasi-static $\vect{d}$ over the window; it is the limit the recursive filter
 approaches under excitation, used here as a relative identifiability measure rather
 than an absolute uncertainty. Equation~\eqref{eq:crb} gives the \emph{raw} scalar $\sigma$ an
-estimation-theoretic meaning: $\sigma/r_s$ is the marginal Fisher information on the
+estimation-theoretic meaning: $\tfrac{\sigma}{r_s}$ is the marginal Fisher information on the
 mass, so $\sigma$ is the inverse Cram\'er--Rao bound (up to the noise variance).
 The bound is stated on the inverse mass $\beta$; since
 $\mathrm{var}(\hat m)\approx m^4\,\mathrm{var}(\hat\beta)$ for small errors, the
@@ -547,7 +546,7 @@ $\mat{F}=\partial\vect{f}/\partial\vect{x}$, and applies two measurement updates
 The odometry \eqref{eq:y} is a linear update through
 $\mat{H}=[\mat{I}_6\ \mat{0}]$ with covariance $\mat{R}$. The accelerometer
 \eqref{eq:imu} is a nonlinear update with model
-$\vect{g}(\vect{x})=(T/m)\vect{a}+\vect{d}-c\,\norm{\vect{v}}\,\vect{v}$,
+$\vect{g}(\vect{x})=\tfrac{T}{m}\vect{a}+\vect{d}-c\,\norm{\vect{v}}\,\vect{v}$,
 Jacobian $\mat{H}_s=\partial\vect{g}/\partial\vect{x}$, and covariance
 $\mat{R}_s$; this residual is the term that drives $\vect{d}$ and makes the
 filter a virtual force sensor. Both updates use the standard EKF gain
@@ -704,7 +703,7 @@ is the active counterpart of the gate.
 The model error reaching the controller stays bounded. The uncompensated force is
 the estimation residual $\vect{d}-\hat{\vect{d}}$, small because $\vect{d}$ is
 observable throughout, and the mass enters only as the multiplicative thrust
-scaling $\hat m/m$, whose error is bounded by \eqref{eq:crb} where the mass is
+scaling $\tfrac{\hat m}{m}$, whose error is bounded by \eqref{eq:crb} where the mass is
 observable and frozen at its identification value where it is not. A formal
 stability analysis of the coupled estimator--controller loop is left to future
 work.
@@ -734,11 +733,13 @@ parameters are listed in Table~\ref{tab:params}.
 \centering
 \caption{Estimator and controller parameters.}
 \label{tab:params}
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lll}
 \toprule
 Block & Parameter & Value \\
 \midrule
-Plant / sim       & mass, rate $1/\tau_{rc}$    & \SI{1.05}{\kilogram}, \SI{18}{\per\second} \\
+Plant / sim       & mass, rate $\tau_{rc}^{-1}$    & \SI{1.05}{\kilogram}, \SI{18}{\per\second} \\
 Drag              & $c$ (estimator)            & $0$ (lumped into $\hat{\vect{d}}$) \\
 Odometry noise    & injected on $p,v$          & MuJoCo, released config \\
 Wind              & profile, amplitude         & step / sine, $\sim$\SI{2}{\newton} \\
@@ -752,7 +753,8 @@ NMPC weights      & $\mat{Q}_p,\mat{Q}_a,\mat{Q}_v$ & $180,\ 20,\ 30$ \\
                   & $\mat{R}_u$                & $\mathrm{diag}(0.3,5,5,5)$ \\
 NMPC limits       & $T_{\max},\,\omega_{\max}$  & \SI{49}{\newton}, \SI{20}{\radian\per\second} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \subsection{Controller, trajectories, and disturbance}
@@ -1112,7 +1114,7 @@ error rises from \SI{0.42}{\newton} to at most \SI{0.58}{\newton} (under the lar
 bias), and the mass calibration from below \SI{1}{\percent} to at most
 \SI{11.5}{\percent} (under a \SI{10}{\percent} thrust mismatch, which couples almost
 one-to-one into the mass). The bias loads the force but barely the mass, while the
-scale and thrust errors load the mass through the $T/m$ term, as expected; the
+scale and thrust errors load the mass through the $\tfrac{T}{m}$ term, as expected; the
 near-linear degradation indicates the calibration error is recoverable by a
 one-time bench calibration of the bias and scale.
 
@@ -1192,109 +1194,10 @@ motion-capture system and a calibrated disturbance is the immediate next step, a
 is a continuous (rather than family-restricted) optimal-input design.
 Because the filter reads any external specific force, the approach extends toward
 contact and tether forces, where an observability-aware wrench estimate would
-support aerial physical interaction without a dedicated force sensor.
+support aerial physical interaction~\cite{ollero2022past,augugliaro2013admittance} without a dedicated force sensor.
 
 % ════════════════════ REFERENCES ════════════════════
-\begin{thebibliography}{99}
-
-% --- External wrench / force estimation (momentum & residual observers) ---
-\bibitem{tomic2017external}
-T.~Tomi\'c, C.~Ott, S.~Haddadin,
-``External Wrench Estimation, Collision Detection, and Reflex Reaction for Flying Robots,''
-\emph{IEEE Trans.\ Robotics}, vol.~33, no.~6, pp.~1467--1482, 2017.
-
-\bibitem{ruggiero2014impedance}
-F.~Ruggiero \emph{et al.},
-``Impedance Control of VToL UAVs with a Momentum-Based External Generalized Forces Estimator,''
-in \emph{IEEE ICRA}, 2014, pp.~2093--2099.
-
-% --- Moving-horizon estimation ---
-\bibitem{rao2003constrained}
-C.~V.~Rao, J.~B.~Rawlings, D.~Q.~Mayne,
-``Constrained State Estimation for Nonlinear Discrete-Time Systems: Stability and Moving Horizon Approximations,''
-\emph{IEEE Trans.\ Autom.\ Control}, vol.~48, no.~2, pp.~246--258, 2003.
-
-\bibitem{liu2023nonlinear}
-M.~Liu, Y.~Tan, I.~Mareels,
-``Nonlinear Moving Horizon Estimation for Quadrotor System Identification,''
-\emph{Control Eng.\ Practice}, vol.~135, art.~no.~105508, 2023.
-
-% --- Online parameter / inertial identification ---
-\bibitem{burri2018system}
-M.~Burri \emph{et al.},
-``A Framework for Maximum Likelihood Parameter Identification Applied on MAVs,''
-\emph{J.\ Field Robotics}, vol.~35, no.~1, pp.~5--22, 2018.
-
-\bibitem{wuest2019online}
-V.~W\"uest, V.~Kumar, G.~Loianno,
-``Online Estimation of Geometric and Inertia Parameters for Multirotor Aerial Vehicles,''
-in \emph{IEEE ICRA}, 2019, pp.~1884--1890.
-
-\bibitem{wensing2017geometric}
-P.~M.~Wensing, S.~Kim, J.-J.~E.~Slotine,
-``Linear Matrix Inequalities for Physically Consistent Inertial Parameter Identification,''
-\emph{IEEE Robotics Autom.\ Lett.}, vol.~3, no.~1, pp.~60--67, 2018.
-
-% --- Optimal input design / active sensing ---
-\bibitem{mehra1974optimal}
-R.~K.~Mehra,
-``Optimal Input Signals for Parameter Estimation in Dynamic Systems: Survey and New Results,''
-\emph{IEEE Trans.\ Autom.\ Control}, vol.~19, no.~6, pp.~753--768, 1974.
-
-% --- Actuator dynamics / INDI ---
-\bibitem{smeur2016adaptive}
-E.~Smeur, Q.~Chu, G.~de Croon,
-``Adaptive Incremental Nonlinear Dynamic Inversion for Attitude Control of Micro Air Vehicles,''
-\emph{J.\ Guid.\ Control Dyn.}, vol.~39, no.~3, pp.~450--461, 2016.
-
-\bibitem{bauersfeld2021neurobem}
-L.~Bauersfeld, E.~Kaufmann, P.~Foehn, S.~Sun, D.~Scaramuzza,
-``NeuroBEM: Hybrid Aerodynamic Quadrotor Model,''
-in \emph{Robotics: Science and Systems}, 2021.
-
-% --- Disturbance-aware / data-driven MPC for quadrotors ---
-\bibitem{torrente2021data}
-G.~Torrente, E.~Kaufmann, P.~Foehn, D.~Scaramuzza,
-``Data-Driven MPC for Quadrotors,''
-\emph{IEEE Robotics Autom.\ Lett.}, vol.~6, no.~2, pp.~3769--3776, 2021.
-
-\bibitem{sun2022comparative}
-S.~Sun, A.~Romero, P.~Foehn, E.~Kaufmann, D.~Scaramuzza,
-``A Comparative Study of Nonlinear MPC and Differential-Flatness-Based Control for Quadrotor Agile Flight,''
-\emph{IEEE Trans.\ Robotics}, vol.~38, no.~6, pp.~3357--3373, 2022.
-
-\bibitem{oconnell2022neuralfly}
-M.~O'Connell, G.~Shi, X.~Shi, K.~Azizzadenesheli, A.~Anandkumar, Y.~Yue, S.-J.~Chung,
-``Neural-Fly Enables Rapid Learning for Agile Flight in Strong Winds,''
-\emph{Science Robotics}, vol.~7, no.~66, art.~eabm6597, 2022.
-
-% --- State-estimation foundations (notation / manifold) ---
-\bibitem{sola2017quaternion}
-J.~Sol\`a,
-``Quaternion Kinematics for the Error-State Kalman Filter,''
-arXiv:1711.02508, 2017.
-
-\bibitem{sola2018micro}
-J.~Sol\`a, J.~Deray, D.~Atchuthan,
-``A Micro Lie Theory for State Estimation in Robotics,''
-arXiv:1812.01537, 2018.
-
-\bibitem{forster2015imu}
-C.~Forster, L.~Carlone, F.~Dellaert, D.~Scaramuzza,
-``IMU Preintegration on Manifold for Efficient Visual-Inertial Maximum-a-Posteriori Estimation,''
-in \emph{Robotics: Science and Systems}, 2015.
-
-% --- Tooling ---
-\bibitem{verschueren2022acados}
-R.~Verschueren \emph{et al.},
-``acados: a modular open-source framework for fast embedded optimal control,''
-\emph{Math.\ Program.\ Comput.}, vol.~14, no.~1, pp.~147--183, 2022.
-
-\bibitem{todorov2012mujoco}
-E.~Todorov, T.~Erez, Y.~Tassa,
-``MuJoCo: A Physics Engine for Model-Based Control,''
-in \emph{IEEE/RSJ IROS}, 2012, pp.~5026--5033.
-
-\end{thebibliography}
+\bibliographystyle{IEEEtran}
+\bibliography{references}
 
 \end{document}

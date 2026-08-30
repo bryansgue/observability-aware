@@ -48,11 +48,12 @@ def main():
         ax.plot(t, M_TRUE * d[:, c[est]], color="#c0392b", ls="--",
                 label=r"EKF $m\hat{d}$")
         r = np.corrcoef(d[t > 3, c[est]], d[t > 3, c[gt]])[0, 1]
-        ax.set_ylabel(rf"$f_{lab}$ [N]")
-        ax.text(0.99, 0.04, rf"corr $= {r:.2f}$", transform=ax.transAxes,
+        ax.set_ylabel(rf"$f_{{e,{lab}}}$ [N]")
+        ax.text(0.99, 0.04, rf"correlation $= {r:.2f}$", transform=ax.transAxes,
                 ha="right", va="bottom", fontsize=8.5, color="0.3")
     # title omitted — info in caption
-    axx[0].legend(loc="upper right", ncol=2, framealpha=0.95)
+    axx[0].legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=2,
+                  framealpha=0.95, borderaxespad=0)
     axx[-1].set_xlabel("time [s]")
 
     fig.savefig(out, dpi=300)
