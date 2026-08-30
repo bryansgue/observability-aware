@@ -14,8 +14,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 plt.rcParams.update({
-    "font.family": "serif", "font.size": 6.5, "axes.labelsize": 6.5,
-    "legend.fontsize": 7.5, "figure.dpi": 200, "savefig.bbox": "tight",
+    "font.family": "serif", "font.size": 11, "axes.labelsize": 11,
+    "legend.fontsize": 9, "figure.dpi": 200, "savefig.bbox": "tight",
     "axes.grid": True, "grid.alpha": 0.25, "grid.linestyle": "--",
 })
 RES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "results")
@@ -33,7 +33,7 @@ def main():
             ("y", "dy_ekf", "vtheta", "#2ca02c"),
             ("z", "dz_ekf", "a_theta", "#c0392b")]
 
-    fig, axs = plt.subplots(1, 3, figsize=(3.6, 1.5))
+    fig, axs = plt.subplots(3, 1, figsize=(7.0, 5.2))
     for ax, (lbl, de, gt, col) in zip(axs, axes):
         est = M_TRUE * d[m, c[de]]      # estimated force [N]
         g = d[m, c[gt]]                  # ground-truth force [N]
@@ -44,11 +44,10 @@ def main():
         ax.scatter(g, est, s=4, alpha=0.25, color=col)
         xx = np.linspace(lo, hi, 50)
         ax.plot(xx, a*xx+b, color=col, lw=1.8, label=f"fit: slope {a:.2f}")
-        ax.set_xlabel(f"$f_{{e,{lbl}}}$ [N]", labelpad=1)
-        ax.set_ylabel(f"$m\\hat{{d}}_{lbl}$ [N]", labelpad=1)
-        ax.set_title(["(a)","(b)","(c)"][["x","y","z"].index(lbl)] + f" slope {a:.2f}", fontsize=6.5, pad=2)
-        from matplotlib.ticker import MaxNLocator
-        ax.xaxis.set_major_locator(MaxNLocator(3)); ax.yaxis.set_major_locator(MaxNLocator(3)); ax.tick_params(labelsize=6, pad=1)
+        ax.set_xlabel(f"true force $f_{{e,{lbl}}}$ [N]")
+        ax.set_ylabel(f"estimated $m\\hat{{d}}_{lbl}$ [N]")
+        ax.set_title(["(a)","(b)","(c)"][["x","y","z"].index(lbl)], fontsize=11, pad=3)
+        ax.legend(loc="upper left", framealpha=0.9, fontsize=9)
         print(f"  axis {lbl}: slope={a:.3f} intercept={b:+.3f} N  R2={r2:.4f}")
     fig.tight_layout()
     out = os.path.join(RES, "fig_calib.png")
