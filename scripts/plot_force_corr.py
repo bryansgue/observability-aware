@@ -111,13 +111,13 @@ def main():
                     capthick=1.0, elinewidth=1.0, label=lab, zorder=3)
 
     ax.set_xlabel("peak speed [m/s]")
-    ax.set_ylabel(r"correlation $\hat{d}$ vs. ground-truth force")
+    ax.set_ylabel(r"$\rho(\hat{d}_i,\, f_{e,i})$")
     # title omitted — info goes in the LaTeX caption (IEEE convention)
-    ax.set_ylim(0.6, 1.02)
+    ax.set_ylim(0.85, 1.0)
     ticks = list(xpos)
     labels = ["hover" if abs(t) < 1e-6 else f"{round(t)}" for t in ticks]
     ax.set_xticks(ticks); ax.set_xticklabels(labels)
-    ax.legend(loc="lower right", framealpha=0.95)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=3, frameon=False, columnspacing=1.2, handletextpad=0.5)
     # N and method named in the LaTeX caption (IEEE convention) — no in-axes metadata
 
     fig.savefig(out, dpi=300)
