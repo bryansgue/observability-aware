@@ -282,7 +282,7 @@ wind, in real time at \SI{100}{\hertz}.
 
 This is a methodology and feasibility study in software-in-the-loop. We exercise
 the sensor against injected accelerometer bias, scale-factor, and thrust-mismatch
-errors to probe the dominant real-sensor effects, but a full hardware demonstration,
+errors to probe the dominant effects of a real sensor, but a full hardware demonstration,
 on a real IMU and thrust map, or on a manipulator whose joint-torque readings give
 the same identifiability structure, is the natural next step and is deliberately left
 to a dedicated follow-up.
@@ -497,8 +497,8 @@ about their mean, and it becomes positive through a change in the thrust
 magnitude $T_k$, a change in its direction $\vect{a}_k$, or both; it is zero only
 when the vectors are identical across the window, which is the case at hover. Its dimension is thrust squared (newtons squared; the italic $N$ denotes the window length), so its
 absolute scale grows with the thrust level of the maneuver. To obtain a
-dimensionless, maneuver-comparable measure we normalize it by the thrust energy
-in the window,
+dimensionless measure, comparable across maneuvers, we normalize it by the
+thrust energy in the window,
 \begin{equation}
 \tilde\sigma \triangleq \frac{\sigma}{\sum_k T_k^2}\in[0,1],
 \label{eq:snorm}
@@ -1697,7 +1697,7 @@ the identifiability the closed loop actually achieves, which is why it is
 measured rather than prescribed. The main
 limitation is that the study is in simulation; hardware validation with a
 motion-capture system and a calibrated disturbance is the immediate next step, as
-is a continuous (rather than family-restricted) optimal-input design.
+is an optimal-input design over continuous inputs rather than over a probe family.
 Because the filter reads any external specific force, the approach extends toward
 contact and tether forces, where an identifiability-aware wrench estimate would
 support aerial physical interaction~\cite{ollero2022past,augugliaro2013admittance} without a dedicated force sensor.
