@@ -100,6 +100,29 @@ Reviewer#3, Typographical and formatting notes:
 Author action: No sentence now begins with a figure citation: the affected sentences were rephrased so the reference falls mid-sentence, where the IEEE Editorial Style Manual prescribes the abbreviated "Fig."; this satisfies the request without deviating from the house style; "Section VIII concludes the paper."; "body attitude rate (body rate for short)" at the definition of $\omega$; comma after "separated" removed; comma after "mass" added; "newtons squared" kept in lowercase, as SI prescribes for unit names spelled out (the italic $N$ is reserved for the window length, so we did not switch to the symbol either); we hope the reviewer accepts this; "Dividing out" changed to "Normalizing by"; Table 2 now appears on the page of its first mention, and Table 3 was moved next to its first mention as well; Figs. 4 and 13 regenerated as single-column three-row stacks with fonts at caption size; the per-panel headers of Fig. 4 carry only the panel label, with the fitted slopes in the legend, caption, and text.
 
 ======================================================================
+Reviewer #4
+======================================================================
+
+Reviewer#4, Concern #1 (report the compute platform for the "<1 ms per step at 100 Hz" claim, and say so if it is not flight-representative):
+
+Author response: The timings were measured on a laptop-class processor (Intel Core Ultra 9 275HX, one core per solver), not on an embedded flight computer; the method has not been validated on embedded hardware, and we do not claim it.
+
+Author action: Platform stated in Section V-A where the solve time is first given, and referenced again in Section VII-F.
+
+----------------------------------------------------------------------
+Reviewer#4, Concern #2 (why the injected-error ranges of Section VII-H, 0.4 m/s$^2$ bias and 10% scale/thrust, were chosen):
+
+Author response: They bracket what a real platform presents before any in-field calibration: the bias range covers the uncalibrated initial offset of consumer MEMS accelerometers (tens of mg, a few tenths of m/s$^2$), the scale-factor range covers their sensitivity tolerance of a few percent with a wide margin, and the thrust range covers the change of the thrust map over a flight from battery-voltage sag and propeller wear, of the order of 10%.
+
+Author action: Sentence added in Section VII-H.
+
+----------------------------------------------------------------------
+Reviewer#4, Concern #3 (clarify the degradation of the $d_z$ correlation with speed in Table 3 (now Table 4)):
+
+Author response: The ground-truth channel contains only the applied wind, whereas the reading also contains the lumped aerodynamic drag ($c = 0$ in the estimator). The figure-eight has a vertical velocity component, so the lumped drag acquires a vertical part that grows with speed (its driver $v_z\|v\|$ rises from 0.02 to 14 m$^2$/s$^2$ RMS across the battery); it is uncorrelated with the applied steps, and the vertical steps are half the size of the horizontal ones (0.8 N against 1.5 N on $x$), so the same uncorrelated content costs more correlation on that axis. The absolute vertical error moves the other way, from 0.62 N in hover, where the mass–force ambiguity biases the plain filter's $d_z$ (a bias the correlation does not see), to 0.29 N at 10.2 m/s; the dip to 0.91 at 6.1 m/s is comparable to the run-to-run spread ($\pm 0.02$).
+
+Author action: Paragraph added in Section VII-A, and Table 4 moved next to it.
+======================================================================
 Reviewer #5
 ======================================================================
 
@@ -161,26 +184,3 @@ Author action: Paragraph added in Section III after the discussion of the algebr
 ----------------------------------------------------------------------
 Reviewer#5, item 5a (references to remove): none were indicated; we removed none and will act on any specific indication.
 
-======================================================================
-Reviewer #4
-======================================================================
-
-Reviewer#4, Concern #1 (report the compute platform for the "<1 ms per step at 100 Hz" claim, and say so if it is not flight-representative):
-
-Author response: The timings were measured on a laptop-class processor (Intel Core Ultra 9 275HX, one core per solver), not on an embedded flight computer; the method has not been validated on embedded hardware, and we do not claim it.
-
-Author action: Platform stated in Section V-A where the solve time is first given, and referenced again in Section VII-F.
-
-----------------------------------------------------------------------
-Reviewer#4, Concern #2 (why the injected-error ranges of Section VII-H, 0.4 m/s$^2$ bias and 10% scale/thrust, were chosen):
-
-Author response: They bracket what a real platform presents before any in-field calibration: the bias range covers the uncalibrated initial offset of consumer MEMS accelerometers (tens of mg, a few tenths of m/s$^2$), the scale-factor range covers their sensitivity tolerance of a few percent with a wide margin, and the thrust range covers the change of the thrust map over a flight from battery-voltage sag and propeller wear, of the order of 10%.
-
-Author action: Sentence added in Section VII-H.
-
-----------------------------------------------------------------------
-Reviewer#4, Concern #3 (clarify the degradation of the $d_z$ correlation with speed in Table 3 (now Table 4)):
-
-Author response: The ground-truth channel contains only the applied wind, whereas the reading also contains the lumped aerodynamic drag ($c = 0$ in the estimator). The figure-eight has a vertical velocity component, so the lumped drag acquires a vertical part that grows with speed (its driver $v_z\|v\|$ rises from 0.02 to 14 m$^2$/s$^2$ RMS across the battery); it is uncorrelated with the applied steps, and the vertical steps are half the size of the horizontal ones (0.8 N against 1.5 N on $x$), so the same uncorrelated content costs more correlation on that axis. The absolute vertical error moves the other way, from 0.62 N in hover, where the mass–force ambiguity biases the plain filter's $d_z$ (a bias the correlation does not see), to 0.29 N at 10.2 m/s; the dip to 0.91 at 6.1 m/s is comparable to the run-to-run spread ($\pm 0.02$).
-
-Author action: Paragraph added in Section VII-A, and Table 4 moved next to it.
