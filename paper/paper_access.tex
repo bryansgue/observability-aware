@@ -125,7 +125,7 @@ already on board. The accelerometer offers a route. It measures the
 non-gravitational specific force directly, so once gravity and the commanded
 thrust are removed, what remains is the external specific force. This turns the
 inertial measurement unit (IMU) into a \emph{virtual force sensor}, with no added
-hardware, and the reading is instantaneous: no double-differentiation of position,
+hardware, and the reading is instantaneous: no double differentiation of position,
 no estimator lag.
 
 The virtual sensor has one calibration parameter, the vehicle mass, which converts
@@ -1644,7 +1644,7 @@ in hover. All three run in real time at \SI{100}{\hertz}.
 \begin{table}[t]
 \centering
 \caption{Estimator comparison on identical data. Force entries are pooled over
-the battery; the excited-mass entries pool the well-excited runs
+the battery; the mass entries under excitation pool the well-excited runs
 (8.2--10.2\,\si{\meter\per\second}, $N{=}10$ each speed); hover and recovery
 entries are from Figs.~\ref{fig:trans} and~\ref{fig:active}.}
 \label{tab:compare}

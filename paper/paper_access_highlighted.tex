@@ -1,7 +1,7 @@
 \documentclass{ieeeaccess}
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL submitted_v1/paper_access.tex   Sat Aug 29 13:09:48 2026
-%DIF ADD paper_access.tex                Tue Sep  1 20:00:25 2026
+%DIF ADD paper_access.tex                Tue Sep  1 20:03:24 2026
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{mathtools}
@@ -175,7 +175,7 @@ already on board. The accelerometer offers a route. It measures the
 non-gravitational specific force directly, so once gravity and the commanded
 thrust are removed, what remains is the external specific force. This turns the
 inertial measurement unit (IMU) into a \emph{virtual force sensor}, with no added
-hardware, and the reading is instantaneous: no double-differentiation of position,
+hardware, and the reading is instantaneous: no \DIFdelbegin \DIFdel{double-differentiation }\DIFdelend \DIFaddbegin \DIFadd{double differentiation }\DIFaddend of position,
 no estimator lag.
 
 The virtual sensor has one calibration parameter, the vehicle mass, which converts
@@ -2203,7 +2203,7 @@ in hover. All three run in real time at \SI{100}{\hertz}.
 \DIFdelend \DIFaddbegin \begin{table}[t]\color{blue}
 \centering
 \caption{Estimator comparison on identical data. Force entries are pooled over
-the battery; the excited-mass entries pool the well-excited runs
+the battery; the mass entries under excitation pool the well-excited runs
 (8.2--10.2\,\si{\meter\per\second}, $N{=}10$ each speed); hover and recovery
 entries are from Figs.~\ref{fig:trans} and~\ref{fig:active}.}
 \label{tab:compare}
