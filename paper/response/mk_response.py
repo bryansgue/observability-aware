@@ -55,6 +55,8 @@ while i < len(lines):
         out.append("\\rlabel{Author response:}" + tex(L[len("Author response:"):].strip()) + "\n"); i += 1; continue
     if L.startswith("Author action:"):
         out.append("\\rlabel{Author action:}" + tex(L[len("Author action:"):].strip()) + "\n"); i += 1; continue
+    if L.startswith("$$") and L.rstrip().endswith("$$") and len(L.strip()) > 4:
+        out.append("\\[" + L.strip()[2:-2].strip() + "\\]\n"); i += 1; continue
     if L.startswith("- "):
         items = []
         while i < len(lines) and lines[i].startswith("- "): items.append(tex(lines[i][2:].strip())); i += 1

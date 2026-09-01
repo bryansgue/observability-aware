@@ -44,7 +44,20 @@ Jos\'e Varela-Ald\'as et al.
 
 \concern{Reviewer\#1, Concern \#2 (Eqs. (8)--(12) treat d as constant, while the EKF models it as a random walk; extend the derivation or quantify the approximation error against window length, disturbance bandwidth, and $q_d$)}
 
-\rlabel{Author response:}Correct. Under the random-walk model the exact marginal information on the inverse mass is a weighted Schur complement, $\sigma_{\mathrm{eff}}/r_s = t^{\top}\Sigma^{-1}t - t^{\top}\Sigma^{-1}M\,(M^{\top}\Sigma^{-1}M)^{-1}M^{\top}\Sigma^{-1}t$ with $\Sigma = r_s I + q_d\, C \otimes I_3$, $[C]_{kl} = \min(k,l) - 1$, which reduces to $\sigma/r_s$ for $q_d \to 0$. Evaluated on logged flight data (new Fig. 14(b)): for the implemented $q_d = 10^{-2}$ the information in a 1-s window is 12\% of the constant-force value, and the ratio falls with the window length (0.25--4 s) and with $q_d$ (0--0.1). Consequences: (i) Proposition 2 is an optimistic bound for the implemented filter; scaled by this ratio it is of the scale of the empirical across-run spread of the mass under excitation (Fig. 14(a)). (ii) for the disturbance profiles (steps, sinusoid) and the $q_d$ range evaluated, the gate decision is unaffected: it thresholds the dimensionless $\tilde\sigma$ with margin, and at hover $\sigma_{\mathrm{eff}}$ stays at the noise floor for every $q_d$ tested. The random-walk variance is the bandwidth parameter of the implemented model; we did not sweep the physical disturbance frequency separately, and the manuscript now says so.
+\rlabel{Author response:}Correct. Under the random-walk model the exact marginal information on the inverse mass is a weighted Schur complement,
+
+\[\frac{\sigma_{\mathrm{eff}}}{r_s} \;=\; t^{\top}\Sigma^{-1}t \;-\; t^{\top}\Sigma^{-1}M\,\bigl(M^{\top}\Sigma^{-1}M\bigr)^{-1}M^{\top}\Sigma^{-1}t, \qquad \Sigma = r_s I + q_d\, C \otimes I_3,\quad [C]_{kl} = \min(k,l) - 1,\]
+
+which reduces to $\sigma/r_s$ for $q_d \to 0$.
+
+Evaluated on logged flight data (new Fig. 14(b)): for the implemented $q_d = 10^{-2}$ the information in a 1-s window is 12\% of the constant-force value, and the ratio falls with the window length (0.25--4 s) and with $q_d$ (0--0.1). Two consequences follow.
+
+\begin{itemize}[leftmargin=1.4em]
+\item Proposition 2 is an optimistic bound for the implemented filter; scaled by this ratio it is of the scale of the empirical across-run spread of the mass under excitation (Fig. 14(a)).
+\item For the disturbance profiles (steps, sinusoid) and the $q_d$ range evaluated, the gate decision is unaffected: it thresholds the dimensionless $\tilde\sigma$ with margin, and at hover $\sigma_{\mathrm{eff}}$ stays at the noise floor for every $q_d$ tested.
+\end{itemize}
+
+The random-walk variance is the bandwidth parameter of the implemented model; we did not sweep the physical disturbance frequency separately, and the manuscript now says so.
 
 \rlabel{Author action:}Derivation in Section III (Eqs. (13)--(15)), new Fig. 14, new paragraph after Proposition 2 in Section III, and the bound-versus-spread comparison in Section VII-I.
 
@@ -56,7 +69,15 @@ Jos\'e Varela-Ald\'as et al.
 
 \concern{Reviewer\#1, Concern \#4 (one normalized threshold is shown to work only in the reported environment; provide a sensitivity study over window, dwell, process noise, measurement noise, and maneuver intensity; relate the threshold to an allowable mass variance through the Cram\'er--Rao bound)}
 
-\rlabel{Author response:}Both done. Threshold vs. bound: near hover $\sum_k T_k^2 \approx N(mg)^2$, so for a window that just opens the gate the Cram\'er--Rao bound reads $\mathrm{std}(\hat m)/m \gtrsim (1/g)\sqrt{r_s/(\tilde\sigma_{\min} N)}$ (new Eq. (16)): 7.6\% for one second of data and 2.4\% after ten with our parameters. The bound is a floor, not a guarantee: for a one-second window at or below the threshold, even an efficient unbiased estimator could not attain a standard deviation smaller than 7.6\%, which is of the scale of the 5--7\% hover bias the gate guards against. Under the same ideal constant-force assumptions, the floor crosses the observed 3.3\% residual after approximately 5.3 seconds of accumulated admissible data and reaches 2.4\% after ten seconds. These figures characterize only the best-case variance permitted by the information; they neither predict nor upper-bound the realized estimation error. Sensitivity (new Table 7; windy maneuver-to-hover transition of Fig. 7, one parameter at a time, five seeds each, RMS mass error over the hover; reference 2.2\% gated vs 5.1\% plain):
+\rlabel{Author response:}Both done.
+
+Threshold vs. bound: near hover $\sum_k T_k^2 \approx N(mg)^2$, so for a window that just opens the gate the Cram\'er--Rao bound reads (new Eq. (16))
+
+\[\frac{\mathrm{std}(\hat m)}{m} \;\gtrsim\; \frac{1}{g}\sqrt{\frac{r_s}{\tilde\sigma_{\min}\, N}}\,,\]
+
+which gives 7.6\% for one second of data and 2.4\% after ten with our parameters. The bound is a floor, not a guarantee: for a one-second window at or below the threshold, even an efficient unbiased estimator could not attain a standard deviation smaller than 7.6\%, which is of the scale of the 5--7\% hover bias the gate guards against. Under the same ideal constant-force assumptions, the floor crosses the observed 3.3\% residual after approximately 5.3 seconds of accumulated admissible data and reaches 2.4\% after ten seconds. These figures characterize only the best-case variance permitted by the information; they neither predict nor upper-bound the realized estimation error.
+
+Sensitivity (new Table 7; windy maneuver-to-hover transition of Fig. 7, one parameter at a time, five seeds each, RMS mass error over the hover; reference 2.2\% gated vs 5.1\% plain):
 \begin{itemize}[leftmargin=1.4em]
 \item Threshold: below 0.009 the gate re-opens on hover excursions (3.4--3.8\%); at 0.015 it is erratic (5.1 $\pm$ 2.8\%); at 0.03--0.06 it holds the mass to 0.4--0.6\%. The threshold is limited not by the hover but by what must re-open the gate: with the 0.8-m budget the probe reaches $\tilde\sigma \approx 0.048$, so a threshold of 0.03 would be admissible for the probe and would hold the mass below 1\%, but it would exclude the 3.8 m/s flight ($\tilde\sigma = 0.014$) from identification; we therefore retain 0.009 and accept the residual re-openings in windy hover.
 \item Dwell 0.1--1 s: gate never worse than plain, best at 0.25 s; long dwells make re-openings rare but larger.
