@@ -243,8 +243,8 @@ Recursive inertial ID~\cite{wuest2019online,burri2018system,boyacioglu2023inerti
 \centering
 \includegraphics[width=\columnwidth]{figs/fig_system.pdf}
 \caption{Architecture of the self-calibrating virtual force sensor: the
-identifiability $\tilde\sigma$ gates the mass calibration and triggers the
-active probe; the NMPC feeds $\hat{\vect{d}}$ forward.}
+identifiability signal gates the mass calibration and triggers the
+active probe; the NMPC feeds the estimated force forward.}
 \label{fig:system}
 \end{figure}
 
@@ -1242,7 +1242,7 @@ calibration.
 \centering
 \includegraphics[width=\columnwidth]{figs/fig_trans.png}
 \caption{Mass over a windy maneuver-to-hover transition ($N{=}5$, mean $\pm$
-std); hover shaded, $\tilde\sigma$ and threshold at the bottom.}
+std); hover shaded, identifiability signal and threshold at the bottom.}
 \label{fig:trans}
 \end{figure}
 
@@ -1270,8 +1270,8 @@ depends on the probe shape, which the next experiment examines.
 \centering
 \includegraphics[width=\columnwidth]{figs/fig_active.png}
 \caption{Mass recovery from a wrong prior (\SI{0.70}{\kilogram}) in wind-free
-hover ($N{=}5$, mean $\pm$ std): the probe (shaded) lifts $\tilde\sigma$ and
-recovers the mass, is withdrawn after \SI{15}{\second} of gate-open time, and the
+hover ($N{=}5$, mean $\pm$ std): the probe (shaded) raises the identifiability
+signal, recovers the mass, is withdrawn after \SI{15}{\second} of gate-open time, and the
 estimate holds for the rest of the hover. Unlike the excited trajectory of
 Fig.~\ref{fig:massconv}, hover provides no information: the passive filter stays
 at the prior.}

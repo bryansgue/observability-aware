@@ -1,7 +1,7 @@
 \documentclass{ieeeaccess}
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL submitted_v1/paper_access.tex   Sat Aug 29 13:09:48 2026
-%DIF ADD paper_access.tex                Tue Sep  1 19:39:16 2026
+%DIF ADD paper_access.tex                Tue Sep  1 19:46:53 2026
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{mathtools}
@@ -285,7 +285,16 @@ signal $\tilde\sigma$ \DIFdelbegin \DIFdel{.
 }\DIFdelend \DIFaddbegin \DIFadd{are shown in Fig.~\ref{fig:system}.
 }\DIFaddend 
 
-\DIFaddbegin \begin{table*}[t]\color{blue}
+\DIFdelbegin %DIFDELCMD < \begin{figure}[t]
+%DIFDELCMD < \centering
+%DIFDELCMD < \includegraphics[width=\columnwidth]{figs/fig_system.pdf}
+%DIFDELCMD < \caption{Architecture of the self-calibrating virtual force sensor: the
+%DIFDELCMD < identifiability $\tilde\sigma$ gates the mass calibration and triggers the
+%DIFDELCMD < active probe; the NMPC feeds $\hat{\vect{d}}$ forward.}
+%DIFDELCMD < \label{fig:system}
+%DIFDELCMD < \end{figure}
+%DIFDELCMD < %%%
+\DIFdelend \DIFaddbegin \begin{table*}[t]\color{blue}
 \centering
 \caption{Handling of the calibration parameter's identifiability in related
 approaches. ``Gate signal'' is what decides whether the parameter is updated;
@@ -307,17 +316,18 @@ Recursive inertial ID~\cite{wuest2019online,burri2018system,boyacioglu2023inerti
 \bottomrule
 \end{tabular}
 \end{table*}
+\DIFaddend 
 
-\DIFaddend \begin{figure}[t]
+\DIFaddbegin \begin{figure}[t]\color{blue}
 \centering
 \includegraphics[width=\columnwidth]{figs/fig_system.pdf}
 \caption{Architecture of the self-calibrating virtual force sensor: the
-identifiability $\tilde\sigma$ gates the mass calibration and triggers the
-active probe; the NMPC feeds $\hat{\vect{d}}$ forward.}
+identifiability signal gates the mass calibration and triggers the
+active probe; the NMPC feeds the estimated force forward.}
 \label{fig:system}
 \end{figure}
 
-The contributions of this work are the following. The bare reading of the external
+\DIFaddend The contributions of this work are the following. The bare reading of the external
 specific force from the accelerometer residual is a known momentum/IMU-residual
 technique~\cite{tomic2017external,ruggiero2014impedance,smeur2016adaptive}; our
 contribution is the \DIFdelbegin \DIFdel{observability-aware }\DIFdelend \DIFaddbegin \DIFadd{identifiability-aware }\DIFaddend self-calibration layer that makes such a
@@ -1514,13 +1524,22 @@ excitation measure cannot tell hover from a maneuver. Only $\tilde\sigma$, which
 mass--vertical-force coupling, detects the \DIFdelbegin \DIFdel{unobservability }\DIFdelend \DIFaddbegin \DIFadd{loss of identifiability }\DIFaddend and protects the
 calibration.
 
-\begin{figure}[t]
+\DIFdelbegin %DIFDELCMD < \begin{figure}[t]
+%DIFDELCMD < \centering
+%DIFDELCMD < \includegraphics[width=\columnwidth]{figs/fig_trans.png}
+%DIFDELCMD < \caption{Mass over a windy maneuver-to-hover transition ($N{=}5$, mean $\pm$
+%DIFDELCMD < std); hover shaded, $\tilde\sigma$ and threshold at the bottom.}
+%DIFDELCMD < \label{fig:trans}
+%DIFDELCMD < \end{figure}
+%DIFDELCMD < %%%
+\DIFdelend \DIFaddbegin \begin{figure}[t]\color{blue}
 \centering
 \includegraphics[width=\columnwidth]{figs/fig_trans.png}
 \caption{Mass over a windy maneuver-to-hover transition ($N{=}5$, mean $\pm$
-std); hover shaded, $\tilde\sigma$ and threshold at the bottom.}
+std); hover shaded, identifiability signal and threshold at the bottom.}
 \label{fig:trans}
 \end{figure}
+\DIFaddend 
 
 \DIFdelbegin %DIFDELCMD < \subsection{Active excitation recovers an unobservable mass}
 %DIFDELCMD < %%%
@@ -1575,8 +1594,8 @@ depends on the probe shape, which the next experiment examines.
 \centering
 \includegraphics[width=\columnwidth]{figs/fig_active.png}
 \caption{Mass recovery from a wrong prior (\SI{0.70}{\kilogram}) in wind-free
-hover ($N{=}5$, mean $\pm$ std): the probe (shaded) lifts $\tilde\sigma$ and
-recovers the mass, is withdrawn after \SI{15}{\second} of gate-open time, and the
+hover ($N{=}5$, mean $\pm$ std): the probe (shaded) raises the identifiability
+signal, recovers the mass, is withdrawn after \SI{15}{\second} of gate-open time, and the
 estimate holds for the rest of the hover. Unlike the excited trajectory of
 Fig.~\ref{fig:massconv}, hover provides no information: the passive filter stays
 at the prior.}
