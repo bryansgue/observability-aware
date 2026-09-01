@@ -16,6 +16,7 @@ def tex(t):
     return "".join(pp if pp.startswith("$") else _tex(pp) for pp in parts)
 def _tex(t):
     t = t.replace("\\", "\\textbackslash{}")
+    t = re.sub(r'"([^"]+)"', r"``\1''", t)
     t = re.sub(r"[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+", lambda m: "$^{" + m.group(0).translate(SUP) + "}$", t)
     t = t.replace("−", "$-$").replace("m\u0302", "$\\hat m$").replace("d\u0302", "$\\hat d$").replace("\u0302", "")
     for k, v in U.items(): t = t.replace(k, v)

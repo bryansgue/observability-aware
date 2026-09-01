@@ -175,7 +175,16 @@ Author response and action: Fig. 8 was regenerated from 50-s runs (previously 35
 ----------------------------------------------------------------------
 Reviewer#3, Typographical and formatting notes:
 
-> Sentences that start with "Fig." should be changed to "Figure". (e.g., p. 2, line 53) — "Section VIII concludes." should perhaps be changed to "Section VIII concludes the paper." — "body rate" is more appropriately denoted "body attitude rate". — Page 4, line 23, remove the comma after "separated" — Page 4, line 31, add a comma after "mass" — Page 4, line 40, capitalize Newtons — Page 4, line 47, the term "Dividing out" could be changed to "Normalizing by" — Page 7, line 1, Table 2 should appear on the page where it was first mentioned (or the page immediately after). — Page 8, Figure 4, the font size in figures should be roughly the same as the caption font size. Potentially the headers on the plots could be incorporated into the caption as well. — Page 11, Figure 13, same comments as for Figure 4.
+> Sentences that start with "Fig." should be changed to "Figure". (e.g., p. 2, line 53)
+> Page 3, line 6, "Section VIII concludes." should perhaps be changed to "Section VIII concludes the paper."
+> Page 3, line 30, "body rate" is more appropriately denoted "body attitude rate".
+> Page 4, line 23, remove the comma after "separated"
+> Page 4, line 31, add a comma after "mass"
+> Page 4, line 40, capitalize Newtons
+> Page 4, line 47, the term "Dividing out" could be changed to "Normalizing by"
+> Page 7, line 1, Table 2 should appear on the page where it was first mentioned (or the page immediately after). Ideally, page 6 rather than page 7.
+> Page 8, Figure 4, the font size in figures should be roughly the same as the caption font size. Potentially the headers on the plots could be incorporated into the caption as well.
+> Page 11, Figure 13, same comments as for Figure 4.
 
 Author action: No sentence now begins with a figure citation: the affected sentences were rephrased so the reference falls mid-sentence, where the IEEE Editorial Style Manual prescribes the abbreviated "Fig."; this satisfies the request without deviating from the house style; "Section VIII concludes the paper."; "body attitude rate (body rate for short)" at the definition of $\omega$; comma after "separated" removed; comma after "mass" added; "newtons squared" kept in lowercase, as SI prescribes for unit names spelled out (the italic $N$ is reserved for the window length, so we did not switch to the symbol either); we hope the reviewer accepts this; "Dividing out" changed to "Normalizing by"; Table 2 now appears on the page of its first mention, and Table 3 was moved next to its first mention as well; Figs. 4 and 13 regenerated as single-column three-row stacks with fonts at caption size; the per-panel headers of Fig. 4 carry only the panel label, with the fitted slopes in the legend, caption, and text.
 
@@ -215,7 +224,7 @@ Reviewer #5
 
 Reviewer#5, General comment:
 
-> This paper addresses an important problem: obstacle calibration suffers from an observability issue. Specifically, the measurement requires the vehicle mass information, but the mass is unobservable in near-hover conditions because it is difficult to distinguish the effect of mass from the vertical external force. Therefore, applying a standard Extended Kalman Filter (EKF) may introduce disturbances into the mass estimation. I believe this problem is meaningful and exists in real-world scenarios. However, although I have provided revision suggestions previously, several aspects are still not clearly explained and require further clarification.
+> This paper addresses an important problem: obstacle calibration suffers from an observability issue. Specifically, the measurement requires the vehicle mass information, but the mass is unobservable in near-hover conditions because it is difficult to distinguish the effect of mass from the vertical external force. Therefore, applying a standard Extended Kalman Filter (EKF) may introduce disturbances into the mass estimation. To address this issue, the authors propose a method entitled "Observability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors." I believe this problem is meaningful and exists in real-world scenarios. However, although I have provided revision suggestions previously, several aspects are still not clearly explained and require further clarification.
 
 Author response: We thank the reviewer for the assessment; each of the eight questions is answered below.
 

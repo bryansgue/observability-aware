@@ -8,8 +8,8 @@
 \newcommand{\rlabel}[1]{\par\textbf{#1}\ }
 \begin{document}
 Original Manuscript ID: Access-2026-36061\\
-Original Article Title: "Observability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors"\\
-(revised title: "Identifiability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors")\\
+Original Article Title: ``Observability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors''\\
+(revised title: ``Identifiability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors'')\\
 
 To: IEEE Access Editor\\
 Re: Response to reviewers\\
@@ -18,11 +18,11 @@ Dear Editor,
 
 Thank you for allowing a resubmission of our manuscript, with an opportunity to address the reviewers' comments.
 
-We are uploading (a) our point-by-point response to the comments (below) (response to reviewers, under "Author's Response Files"), (b) an updated manuscript with the changes marked in blue (as "Highlighted PDF"), and (c) a clean updated manuscript without highlights ("Main Manuscript").
+We are uploading (a) our point-by-point response to the comments (below) (response to reviewers, under ``Author's Response Files''), (b) an updated manuscript with the changes marked in blue (as ``Highlighted PDF''), and (c) a clean updated manuscript without highlights (``Main Manuscript'').
 
 Main changes:
 \begin{itemize}[leftmargin=1.4em]
-\item Title and terminology: "observability" replaced by "identifiability" throughout (Reviewer 3).
+\item Title and terminology: ``observability'' replaced by ``identifiability'' throughout (Reviewer 3).
 \item New Table 1: comparison with momentum observers, ESO/disturbance observers, dead-zone/covariance management, Fisher-optimal input design, dual control, and recursive inertial identification (Reviewers 1, 5).
 \item Cram\'er--Rao bound restated as Proposition 2 with proof; the exact Fisher information under the random-walk force model derived in Section III (Eqs. (13)--(15)); new Fig. 14 (Reviewers 1, 3, 5).
 \item Classification signal $\tilde\sigma$ and information content $\sigma/r_s$ separated explicitly; new Table 6 (Reviewer 1).
@@ -77,7 +77,7 @@ The random-walk variance is the bandwidth parameter of the implemented model; we
 
 \begin{quote}\itshape The quantity $\sigma$ is the dispersion of the thrust vectors $T_k a_k$, not merely the dispersion of the thrust direction. It may become positive through changes in thrust magnitude, changes in direction, or both. Several passages describe $\tilde\sigma$ primarily as a measure of directional excitation, which is incomplete. More importantly, normalizing by $\sum T_k^2$ removes the overall thrust scale, but it also removes information relevant to the actual Cram\'er--Rao bound. Two maneuvers may have the same $\tilde\sigma$ while providing different absolute Fisher information because of different thrust magnitudes or accelerometer-noise levels. The manuscript should distinguish clearly between the normalized classification signal and the actual information content.\end{quote}
 
-\rlabel{Author response:}Correct on both counts. $\sigma$ becomes positive through changes in thrust magnitude, direction, or both; the "directional" wording was imprecise. Normalizing by $\sum_k T_k^2$ removes the thrust scale on purpose (one threshold across maneuvers) but discards information the bound retains: equal $\tilde\sigma$ with different thrust or noise levels means different Fisher information.
+\rlabel{Author response:}Correct on both counts. $\sigma$ becomes positive through changes in thrust magnitude, direction, or both; the ``directional'' wording was imprecise. Normalizing by $\sum_k T_k^2$ removes the thrust scale on purpose (one threshold across maneuvers) but discards information the bound retains: equal $\tilde\sigma$ with different thrust or noise levels means different Fisher information.
 
 \rlabel{Author action:}Definition of $\sigma$ rewritten after Eq. (10); text after Eq. (11) states what the normalization discards; $\tilde\sigma$ is now called the classification signal and $\sigma/r_s$ the information content throughout; new Table 6 lists both, plus the one-second Cram\'er--Rao mass uncertainty, for hover, five speeds, and the probe.
 
@@ -120,7 +120,7 @@ Transfer to other vehicles and IMU grades is not established by one simulated pl
 
 \rlabel{Author response:}The model is linear in position, velocity, and force; the attitude enters as a known input, not as a state; drag is not estimated. The only nonlinear dependence on the state is $T/m$, whose linearization about $\hat m$ has a relative curvature error $(\delta m/m)^2$: below 1\% for a 10\% mass error, 18\% for the 0.60 kg prior of Fig. 5, which still converges. The matched moving-horizon estimator (full nonlinear window, no local linearization) did not improve on the EKF, so the linearization is not the limiting factor. The scenarios named by the reviewer matter for other reasons: under rapid rotation a latency $\delta t$ between IMU and attitude gives an error of order $g\,\omega\,\delta t$ (0.5 m/s$^2$ at 5 rad/s and 10 ms), a synchronization requirement; and since the force is in the world frame, a body-fixed disturbance (drag at speed) must be followed by the random walk as the attitude turns it, the bandwidth limit already noted in Section II. A body-frame force state or an unscented/iterated update would be the drop-in changes if either dominated.
 
-\rlabel{Author action:}New Section IV-B, "Validity of the linearization".
+\rlabel{Author action:}New Section IV-B, ``Validity of the linearization''.
 
 \section*{Reviewer \#3}
 
@@ -132,17 +132,17 @@ Transfer to other vehicles and IMU grades is not established by one simulated pl
 
 \concern{Reviewer\#3, Key point}
 
-\begin{quote}\itshape The authors in many places, including the title, interchangeably use the terms "observability" and "identifiability". The work in this paper specifically addresses identifiability, not observability. The two concepts are closely linked, but they are not the same. The terms "observability" should be replaced with "identifiability".\par For work addressing observability of mass in this type of system, the authors may wish to refer to: B. Boyacioglu, D. Sandursky, and K. A. Morgansen, "Nonlinear estimation of rigid body inertial parameters," 2023 AIAA Scitech.\end{quote}
+\begin{quote}\itshape The authors in many places, including the title, interchangeably use the terms ``observability'' and ``identifiability''. The work in this paper specifically addresses identifiability, not observability. The two concepts are closely linked, but they are not the same. The terms ``observability'' should be replaced with ``identifiability''.\par For work addressing observability of mass in this type of system, the authors may wish to refer to: B. Boyacioglu, D. Sandursky, and K. A. Morgansen, ``Nonlinear estimation of rigid body inertial parameters,'' 2023 AIAA Scitech.\end{quote}
 
 \rlabel{Author response:}Agreed. The quantity analyzed is the identifiability of the parameters $(m, d)$ in the accelerometer regressor; observability of the augmented state coincides with it only because position and velocity are measured directly.
 
-\rlabel{Author action:}Title changed to "Identifiability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors"; "observability"/"observable" replaced by "identifiability"/"identifiable" throughout (abstract, keywords, section titles, Table 2, figure captions and figure legends, conclusion); "observability" kept only for the nonlinear observability of the augmented state in Section III, where a sentence now states the distinction and cites [Boyacioglu et al. 2023].
+\rlabel{Author action:}Title changed to ``Identifiability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors''; ``observability''/``observable'' replaced by ``identifiability''/``identifiable'' throughout (abstract, keywords, section titles, Table 2, figure captions and figure legends, conclusion); ``observability'' kept only for the nonlinear observability of the augmented state in Section III, where a sentence now states the distinction and cites [Boyacioglu et al. 2023].
 
 \concern{Reviewer\#3, Minor point 1}
 
 \begin{quote}\itshape In the introduction (p. 1, line 46), one should note that mass is not a force. Mass with gravity is a force.\end{quote}
 
-\rlabel{Author response and action:}Reworded in the abstract, the Introduction, and Section II: a mass error, which enters the reading through the thrust-to-weight ratio, is what is indistinguishable from a vertical force; Section II now says "the weight of an added mass".
+\rlabel{Author response and action:}Reworded in the abstract, the Introduction, and Section II: a mass error, which enters the reading through the thrust-to-weight ratio, is what is indistinguishable from a vertical force; Section II now says ``the weight of an added mass''.
 
 \concern{Reviewer\#3, Minor point 2}
 
@@ -158,7 +158,7 @@ Transfer to other vehicles and IMU grades is not established by one simulated pl
 
 \concern{Reviewer\#3, Minor point 4}
 
-\begin{quote}\itshape On page 6, Section V.B, the reader would benefit from some of the recent(ish) work on optimal excitation for identifiability, particularly in flight systems. One suggestion would be E. A. Morelli, "Determining aircraft moments of inertia from flight test data," AIAA Journal of Guidance, Control, and Dynamics, Jan. 2022, 45(1):4-14.\end{quote}
+\begin{quote}\itshape On page 6, Section V.B, the reader would benefit from some of the recent(ish) work on optimal excitation for identifiability, particularly in flight systems. One suggestion would be E. A. Morelli, ``Determining aircraft moments of inertia from flight test data,'' AIAA Journal of Guidance, Control, and Dynamics, Jan. 2022, 45(1):4-14.\end{quote}
 
 \rlabel{Author response and action:}[Morelli 2022] is now cited in Section V-B, together with [Mehra 1974], as the input-design problem we do not solve in continuous form.
 
@@ -170,15 +170,15 @@ Transfer to other vehicles and IMU grades is not established by one simulated pl
 
 \concern{Reviewer\#3, Typographical and formatting notes}
 
-\begin{quote}\itshape Sentences that start with "Fig." should be changed to "Figure". (e.g., p. 2, line 53) --- "Section VIII concludes." should perhaps be changed to "Section VIII concludes the paper." --- "body rate" is more appropriately denoted "body attitude rate". --- Page 4, line 23, remove the comma after "separated" --- Page 4, line 31, add a comma after "mass" --- Page 4, line 40, capitalize Newtons --- Page 4, line 47, the term "Dividing out" could be changed to "Normalizing by" --- Page 7, line 1, Table 2 should appear on the page where it was first mentioned (or the page immediately after). --- Page 8, Figure 4, the font size in figures should be roughly the same as the caption font size. Potentially the headers on the plots could be incorporated into the caption as well. --- Page 11, Figure 13, same comments as for Figure 4.\end{quote}
+\begin{quote}\itshape Sentences that start with ``Fig.'' should be changed to ``Figure''. (e.g., p. 2, line 53)\par Page 3, line 6, ``Section VIII concludes.'' should perhaps be changed to ``Section VIII concludes the paper.''\par Page 3, line 30, ``body rate'' is more appropriately denoted ``body attitude rate''.\par Page 4, line 23, remove the comma after ``separated''\par Page 4, line 31, add a comma after ``mass''\par Page 4, line 40, capitalize Newtons\par Page 4, line 47, the term ``Dividing out'' could be changed to ``Normalizing by''\par Page 7, line 1, Table 2 should appear on the page where it was first mentioned (or the page immediately after). Ideally, page 6 rather than page 7.\par Page 8, Figure 4, the font size in figures should be roughly the same as the caption font size. Potentially the headers on the plots could be incorporated into the caption as well.\par Page 11, Figure 13, same comments as for Figure 4.\end{quote}
 
-\rlabel{Author action:}No sentence now begins with a figure citation: the affected sentences were rephrased so the reference falls mid-sentence, where the IEEE Editorial Style Manual prescribes the abbreviated "Fig."; this satisfies the request without deviating from the house style; "Section VIII concludes the paper."; "body attitude rate (body rate for short)" at the definition of $\omega$; comma after "separated" removed; comma after "mass" added; "newtons squared" kept in lowercase, as SI prescribes for unit names spelled out (the italic $N$ is reserved for the window length, so we did not switch to the symbol either); we hope the reviewer accepts this; "Dividing out" changed to "Normalizing by"; Table 2 now appears on the page of its first mention, and Table 3 was moved next to its first mention as well; Figs. 4 and 13 regenerated as single-column three-row stacks with fonts at caption size; the per-panel headers of Fig. 4 carry only the panel label, with the fitted slopes in the legend, caption, and text.
+\rlabel{Author action:}No sentence now begins with a figure citation: the affected sentences were rephrased so the reference falls mid-sentence, where the IEEE Editorial Style Manual prescribes the abbreviated ``Fig.''; this satisfies the request without deviating from the house style; ``Section VIII concludes the paper.''; ``body attitude rate (body rate for short)'' at the definition of $\omega$; comma after ``separated'' removed; comma after ``mass'' added; ``newtons squared'' kept in lowercase, as SI prescribes for unit names spelled out (the italic $N$ is reserved for the window length, so we did not switch to the symbol either); we hope the reviewer accepts this; ``Dividing out'' changed to ``Normalizing by''; Table 2 now appears on the page of its first mention, and Table 3 was moved next to its first mention as well; Figs. 4 and 13 regenerated as single-column three-row stacks with fonts at caption size; the per-panel headers of Fig. 4 carry only the panel label, with the fitted slopes in the legend, caption, and text.
 
 \section*{Reviewer \#4}
 
 \concern{Reviewer\#4, Comment 1}
 
-\begin{quote}\itshape Report the compute platform for the "<1 ms per step at 100 Hz" real-time claim, and if it's not an embedded/flight-representative processor, say so.\end{quote}
+\begin{quote}\itshape Report the compute platform for the ``<1 ms per step at 100 Hz'' real-time claim, and if it's not an embedded/flight-representative processor, say so.\end{quote}
 
 \rlabel{Author response:}The timings were measured on a laptop-class processor (Intel Core Ultra 9 275HX, one core per solver), not on an embedded flight computer; the method has not been validated on embedded hardware, and we do not claim it.
 
@@ -204,13 +204,13 @@ Transfer to other vehicles and IMU grades is not established by one simulated pl
 
 \concern{Reviewer\#5, General comment}
 
-\begin{quote}\itshape This paper addresses an important problem: obstacle calibration suffers from an observability issue. Specifically, the measurement requires the vehicle mass information, but the mass is unobservable in near-hover conditions because it is difficult to distinguish the effect of mass from the vertical external force. Therefore, applying a standard Extended Kalman Filter (EKF) may introduce disturbances into the mass estimation. I believe this problem is meaningful and exists in real-world scenarios. However, although I have provided revision suggestions previously, several aspects are still not clearly explained and require further clarification.\end{quote}
+\begin{quote}\itshape This paper addresses an important problem: obstacle calibration suffers from an observability issue. Specifically, the measurement requires the vehicle mass information, but the mass is unobservable in near-hover conditions because it is difficult to distinguish the effect of mass from the vertical external force. Therefore, applying a standard Extended Kalman Filter (EKF) may introduce disturbances into the mass estimation. To address this issue, the authors propose a method entitled ``Observability-Aware Virtual Force Sensing and Self-Calibration for Quadrotors.'' I believe this problem is meaningful and exists in real-world scenarios. However, although I have provided revision suggestions previously, several aspects are still not clearly explained and require further clarification.\end{quote}
 
 \rlabel{Author response:}We thank the reviewer for the assessment; each of the eight questions is answered below.
 
 \concern{Reviewer\#5, Question 1}
 
-\begin{quote}\itshape In Innovation 1, the authors state that "the mass and the vertical external force are not jointly observable in near-hover flight, and we derive an online identifiability measure." This description seems more like an external disturbance estimation method. What is the fundamental difference between the proposed method and existing approaches using an Extended State Observer (ESO) or an Unknown Disturbance Observer (UDO)?\end{quote}
+\begin{quote}\itshape In Innovation 1, the authors state that ``the mass and the vertical external force are not jointly observable in near-hover flight, and we derive an online identifiability measure.'' This description seems more like an external disturbance estimation method. What is the fundamental difference between the proposed method and existing approaches using an Extended State Observer (ESO) or an Unknown Disturbance Observer (UDO)?\end{quote}
 
 \rlabel{Author response:}The force reading itself is not different: it is the accelerometer residual, the same signal an ESO or a disturbance observer builds its disturbance state on. Those observers assume the model, and hence the mass that scales the residual, known; they have no notion of whether the mass is currently separable from the vertical force, and no way to act when it is not. Our contribution is the calibration layer around the residual: (i) an online, closed-form test of that separability (the Schur complement, i.e. the marginal Fisher information on the mass), (ii) a gate that freezes the mass when the test fails, and (iii) an excitation triggered and shaped by the same test.
 
@@ -218,7 +218,7 @@ Transfer to other vehicles and IMU grades is not established by one simulated pl
 
 \concern{Reviewer\#5, Question 2}
 
-\begin{quote}\itshape In Innovation 2, the authors state that the estimation is "protected when unobservable so the reading is protected during hover." How is unobservability quantitatively defined in this work? What criterion is used to determine whether the system is in an unobservable condition?\end{quote}
+\begin{quote}\itshape In Innovation 2, the authors state that the estimation is ``protected when unobservable so the reading is protected during hover.'' How is unobservability quantitatively defined in this work? What criterion is used to determine whether the system is in an unobservable condition?\end{quote}
 
 \rlabel{Author response:}The criterion is the normalized Schur complement of Eq. (11), computed over a 1-s sliding window from the known thrust and attitude, falling below a threshold: $\tilde\sigma < \tilde\sigma_{\min} = 0.009$ (Eq. (18)). Eq. (11) is exactly zero in stationary hover (Proposition 1) and grows with the dispersion of the thrust vector; Table 6 reports its value per regime and Section VII-I its sensitivity.
 
@@ -242,11 +242,11 @@ Transfer to other vehicles and IMU grades is not established by one simulated pl
 
 \concern{Reviewer\#5, Question 5}
 
-\begin{quote}\itshape At the end of Page 5, what exactly does the term "probe" refer to? I could not clearly understand its meaning. Is it a physical sensor or another type of measurement device?\end{quote}
+\begin{quote}\itshape At the end of Page 5, what exactly does the term ``probe'' refer to? I could not clearly understand its meaning. Is it a physical sensor or another type of measurement device?\end{quote}
 
 \rlabel{Author response:}Not a sensor. The probe is a small, bounded excursion added to the position reference of the controller (Eq. (22): a lateral circle and/or a vertical bob of amplitude within a budget $\rho$), injected only while the mass is needed and unidentifiable, and withdrawn afterwards.
 
-\rlabel{Author action:}Defined at its first use in the Introduction ("a small bounded excursion of the position reference (not a sensor)") and in Section V-B.
+\rlabel{Author action:}Defined at its first use in the Introduction (``a small bounded excursion of the position reference (not a sensor)'') and in Section V-B.
 
 \concern{Reviewer\#5, Question 6}
 
@@ -258,7 +258,7 @@ Transfer to other vehicles and IMU grades is not established by one simulated pl
 
 \concern{Reviewer\#5, Question 7}
 
-\begin{quote}\itshape Regarding Equation (16), the optimization objective is provided, but the final controller expression is not explicitly given. Is this formulation complete and reasonable, considering that the section is titled "V. CLOSED-LOOP USE: CONTROL AND ACTIVE CALIBRATION"?\end{quote}
+\begin{quote}\itshape Regarding Equation (16), the optimization objective is provided, but the final controller expression is not explicitly given. Is this formulation complete and reasonable, considering that the section is titled ``V. CLOSED-LOOP USE: CONTROL AND ACTIVE CALIBRATION''?\end{quote}
 
 \rlabel{Author response:}The controller is the receding-horizon law: at each step the problem is solved from the current state, mass, and force estimates, the first input of the optimal sequence is applied, and the horizon shifts.
 
@@ -266,7 +266,7 @@ Transfer to other vehicles and IMU grades is not established by one simulated pl
 
 \concern{Reviewer\#5, Question 8}
 
-\begin{quote}\itshape If all physical parameters are accurately known, according to the fundamental dynamic equation, would the difference between the kinetic energy generated by the robot output and the kinetic energy received by the robot directly represent the disturbance magnitude? Please clarify the conceptual difference between the proposed "virtual force sensing" approach and this intuitive interpretation.\end{quote}
+\begin{quote}\itshape If all physical parameters are accurately known, according to the fundamental dynamic equation, would the difference between the kinetic energy generated by the robot output and the kinetic energy received by the robot directly represent the disturbance magnitude? Please clarify the conceptual difference between the proposed ``virtual force sensing'' approach and this intuitive interpretation.\end{quote}
 
 \rlabel{Author response:}An energy balance can indeed be formed, but it is a scalar (it loses the direction of the force), it is an integral (the force enters as $\int d \cdot v\,dt$, so it lags), and it vanishes wherever the velocity does, which is precisely the hover where the force matters most. The specific-force reading is a vector, instantaneous, and independent of the velocity.
 
