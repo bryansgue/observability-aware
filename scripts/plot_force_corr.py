@@ -113,7 +113,7 @@ def main():
     ax.set_xlabel("peak speed [m/s]")
     ax.set_ylabel(r"$\rho(\hat{d}_i,\, f_{e,i})$")
     # title omitted — info goes in the LaTeX caption (IEEE convention)
-    ax.set_ylim(0.85, 1.0)
+    ax.set_ylim(0.88, 1.0)
     ticks = list(xpos)
     labels = ["hover" if abs(t) < 1e-6 else f"{round(t)}" for t in ticks]
     ax.set_xticks(ticks); ax.set_xticklabels(labels)

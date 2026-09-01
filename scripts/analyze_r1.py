@@ -201,30 +201,28 @@ for thr in [0.003, 0.006, 0.009, 0.015, 0.03]:
         f"({100*std_m/M_TRUE:4.1f} %);  after 10 s of such data: {100*std_m/M_TRUE/np.sqrt(10):4.1f} %")
 
 # ─────────────────────────── figure ───────────────────────────────────────────
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5.0, 2.3))
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5.0, 2.7))
 v  = np.array([r[0] for r in crb_rows]); es = np.array([r[3] for r in crb_rows])*1e3
 cs = np.array([r[4] for r in crb_rows])*1e3
 ax1.semilogy(v, es, "o-", color="#c0392b", label="empirical std, plain EKF")
 rw = np.array([r[7] for r in crb_rows])
 ax1.semilogy(v, np.clip(cs, 1e-3, 1e4), "s--", color="#1f77b4", label=r"CRB, constant $d$")
 ax1.semilogy(v, np.clip(cs/np.sqrt(rw), 1e-3, 1e4), "^:", color="#2e8b57", label=r"CRB, random-walk $d$")
-ax1.set_xlabel("peak speed [m/s]"); ax1.set_ylabel(r"mass std [g]")
-ax1.set_title("(a)", fontsize=9)
-ax1.legend(loc="lower left", frameon=False, fontsize=7)
+ax1.set_xlabel("peak speed [m/s]\n(a)"); ax1.set_ylabel(r"mass std [g]")
+
+ax1.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=1, frameon=False, fontsize=6, borderaxespad=0.15, handlelength=1.2, labelspacing=0.15)
 for i, q in enumerate(qds):
-    lab = "constant $d$" if q == 0 else fr"$q_d={q:g}$"
-    ax2.plot(np.array(wins)*DT, ratio[i], "o-", label=lab)
-ax2.set_xscale("log"); ax2.set_xlabel("window length [s]")
-ax2.set_xticks(np.array(wins)*DT); ax2.set_xticklabels([f"{w*DT:g}" for w in wins]); ax2.minorticks_off()
+    ax2.plot(np.array(wins)*DT, ratio[i], "o-", ms=3, lw=1.4,
+             label=("const. $d$" if q == 0 else fr"$q_d\!=\!{q:g}$"))
+ax2.set_xscale("log"); ax2.set_xticks(np.array(wins)*DT)
+ax2.set_xticklabels([f"{w*DT:g}" for w in wins]); ax2.minorticks_off()
+ax2.set_xlabel("window length [s]\n(b)")
 ax2.set_ylabel(r"$\sigma_{\mathrm{eff}}/\sigma$")
-ax2.set_title("(b)", fontsize=9)
-for i, q in enumerate(qds):
-    lab = "const. $d$" if q == 0 else fr"$q_d\!=\!{q:g}$"
-    dy = {0.1: -6, 0.01: 4}.get(q, 0)   # nudge the two bottom labels apart
-    ax2.annotate(lab, (wins[-1]*DT, ratio[i, -1]), xytext=(4, dy), textcoords="offset points",
-                 fontsize=7, va="center", color=f"C{i}")
-ax2.set_xlim(0.2, 6.5)
 ax2.set_ylim(0, 1.05)
+ax2.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=3, frameon=False,
+           fontsize=6, borderaxespad=0.15, columnspacing=0.6, handlelength=1.0,
+           handletextpad=0.3, labelspacing=0.15)
+fig.tight_layout(w_pad=2.5)
 os.makedirs(FIGS, exist_ok=True)
 fig.savefig(os.path.join(FIGS, "fig_fisher.png"), dpi=300)
 open(os.path.join(RES, "r1_analysis.txt"), "w").write("\n".join(out_lines) + "\n")

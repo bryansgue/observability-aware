@@ -58,8 +58,8 @@ def main():
     ax2.plot(ff("px"), ff("pz"), C_FF, ls="-")
     ax2.set_ylabel("z [m]"); ax2.set_xlabel("x [m]")   # XZ panel
 
-    ax1.legend(loc="upper center", ncol=3, framealpha=0.95,
-               bbox_to_anchor=(0.5, 1.32))
+    ax1.legend(loc="lower center", ncol=3, frameon=False,
+               bbox_to_anchor=(0.5, 1.02))
     fig.tight_layout()
     fig.savefig(out, dpi=300)
     print(f"[OK] {out}")

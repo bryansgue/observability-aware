@@ -106,7 +106,7 @@ def main():
     # title omitted — description and N go in the LaTeX caption (IEEE convention)
     ax1.set_ylim(0.6, 1.15)
     ax1.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=3,
-               framealpha=0.95, borderaxespad=0)
+               frameon=False, borderaxespad=0)
 
     band(ax2, tp, sp, "#117a65", "-", None)
     ax2.set_yscale("log")

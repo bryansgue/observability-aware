@@ -53,7 +53,7 @@ def main():
                 ha="right", va="bottom", fontsize=8.5, color="0.3")
     # title omitted — info in caption
     axx[0].legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=2,
-                  framealpha=0.95, borderaxespad=0)
+                  frameon=False, borderaxespad=0)
     axx[-1].set_xlabel("time [s]")
 
     fig.savefig(out, dpi=300)

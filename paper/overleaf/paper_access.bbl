@@ -50,8 +50,14 @@ V.~W\"uest, V.~Kumar, and G.~Loianno, ``Online estimation of geometric and
 
 \bibitem{wensing2017geometric}
 P.~M. Wensing, S.~Kim, and J.-J.~E. Slotine, ``Linear matrix inequalities for
-  physically consistent inertial parameter identification,'' \emph{IEEE
-  Robotics Autom. Lett.}, vol.~3, no.~1, pp. 60--67, 2018.
+  physically consistent inertial parameter identification: A statistical
+  perspective on the mass distribution,'' \emph{IEEE Robotics Autom. Lett.},
+  vol.~3, no.~1, pp. 60--67, 2018.
+
+\bibitem{guevara2025sindy}
+B.~S. Guevara, J.~Varela-Ald{\'a}s, D.~C. Gandolfo, and J.~M. Toibero,
+  ``{SINDy} and {PD}-based {UAV} dynamics identification for {MPC},''
+  \emph{Drones}, vol.~9, no.~1, p.~71, 2025.
 
 \bibitem{tomic2017external}
 T.~Tomi\'c, C.~Ott, and S.~Haddadin, ``External wrench estimation, collision

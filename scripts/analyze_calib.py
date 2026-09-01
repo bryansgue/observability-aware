@@ -46,8 +46,8 @@ def main():
         ax.plot(xx, a*xx+b, color=col, lw=1.8, label=f"fit: slope {a:.2f}")
         ax.set_xlabel(f"$f_{{e,{lbl}}}$ [N]")
         ax.set_ylabel(f"$m\\hat{{d}}_{lbl}$ [N]")
-        ax.set_title(["(a)","(b)","(c)"][["x","y","z"].index(lbl)], fontsize=11, pad=3)
-        ax.legend(loc="upper left", framealpha=0.9, fontsize=9)
+        
+        ax.legend(loc="upper left", frameon=False, fontsize=9)
         print(f"  axis {lbl}: slope={a:.3f} intercept={b:+.3f} N  R2={r2:.4f}")
     fig.tight_layout()
     out = os.path.join(RES, "fig_calib.png")

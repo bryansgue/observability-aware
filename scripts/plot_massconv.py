@@ -50,7 +50,7 @@ def main():
     ax.set_ylabel("mass estimate [kg]")
     # title omitted — info in caption
     ax.set_ylim(0.55, 1.12)
-    ax.legend(loc="lower right", framealpha=0.95)
+    ax.legend(loc="lower right", frameon=False)
 
     fig.savefig(out, dpi=300)
     print(f"[OK] {out}  (final {mf:.3f} kg)")

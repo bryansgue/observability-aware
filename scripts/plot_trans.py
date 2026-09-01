@@ -113,7 +113,7 @@ def main():
     band(ax1, t, m_ekfg, "#1f77b4", "-",  "identifiability-aware EKF (ours)")
     ax1.set_ylabel("mass estimate [kg]")
     # title omitted — description and N go in the LaTeX caption (IEEE convention)
-    ax1.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), framealpha=0.95,
+    ax1.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), frameon=False,
                ncol=4, fontsize=8.5, borderaxespad=0)
     ax1.text(t_switch*0.5, ax1.get_ylim()[1], "aggressive\n(identifiable)",
              ha="center", va="top", fontsize=9, color="0.35")

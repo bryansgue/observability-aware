@@ -117,7 +117,7 @@ def main():
     labels = ["hover" if abs(t) < 1e-6 else f"{round(t)}" for t in ticks]
     ax.set_xticks(ticks); ax.set_xticklabels(labels)
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=2,
-              framealpha=0.95, borderaxespad=0)
+              frameon=False, borderaxespad=0)
     # N (and the N=9 hover note) stated in the LaTeX caption, not on canvas.
 
     fig.savefig(out, dpi=300)

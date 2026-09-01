@@ -1,7 +1,7 @@
 \documentclass{ieeeaccess}
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL submitted_v1/paper_access.tex   Sat Aug 29 13:09:48 2026
-%DIF ADD paper_access.tex                Sun Aug 30 16:42:31 2026
+%DIF ADD paper_access.tex                Tue Sep  1 11:21:36 2026
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{mathtools}
@@ -192,7 +192,11 @@ itself when it is not. That is the problem we address.
 Online parameter identification for aerial robots has been studied with
 maximum-likelihood frameworks~\cite{burri2018system} and with recursive
 regression on inertial signals that recover the mass and inertia under physical
-consistency constraints~\cite{wuest2019online,wensing2017geometric}; these
+consistency constraints~\cite{wuest2019online,wensing2017geometric}\DIFaddbegin \DIFadd{, and with
+sparse-regression models identified from flight data for predictive
+control~\mbox{%DIFAUXCMD
+\cite{guevara2025sindy}}\hskip0pt%DIFAUXCMD
+}\DIFaddend ; these
 methods need excited flight to identify the inertial parameters. External-force
 estimation has a parallel line of work based on momentum
 observers~\cite{tomic2017external,ruggiero2014impedance,yuksel2014nonlinear,guevara2024estimation}, which estimate the
@@ -276,8 +280,10 @@ naive filter drifts. When the mass must be recalibrated but the flight is too
 weakly exciting to reveal it, the model-predictive controller injects a minimal
 \DIFdelbegin \DIFdel{probe }\DIFdelend \DIFaddbegin \emph{\DIFadd{probe}}\DIFadd{, a small bounded excursion of the position reference (not a sensor),
 }\DIFaddend that restores identifiability and then stops, so the sensor never relies on a
-parameter it cannot see. \DIFdelbegin \DIFdel{Fig.}\DIFdelend \DIFaddbegin \DIFadd{Figure}\DIFaddend ~\ref{fig:system} shows the resulting loop and the role of the
-identifiability signal $\tilde\sigma$.
+parameter it cannot see. \DIFdelbegin \DIFdel{Fig.~\ref{fig:system} shows the }\DIFdelend \DIFaddbegin \DIFadd{The }\DIFaddend resulting loop and the role of the identifiability
+signal $\tilde\sigma$ \DIFdelbegin \DIFdel{.
+}\DIFdelend \DIFaddbegin \DIFadd{are shown in Fig.~\ref{fig:system}.
+}\DIFaddend 
 
 \DIFaddbegin \begin{table*}[t]\color{blue}
 \centering
@@ -1070,9 +1076,9 @@ Over a horizon of $N_c$ nodes the controller minimizes
 J=\ &\sum_{k=0}^{N_c-1}\Big(
    \norm{\vect{p}_k-\vect{p}_k^{\text{ref}}}^2_{\mat{Q}_p}
   +\norm{\vect{v}_k-\vect{v}_k^{\text{ref}}}^2_{\mat{Q}_v}\nonumber\\
-  &\qquad +\norm{\vect{e}_q(\vect{q}_k)}^2_{\mat{Q}_a}
-  +\norm{\vect{u}_k-\vect{u}_k^0}^2_{\mat{R}_u}\Big)\nonumber\\
-  &+\norm{\vect{e}_N}^2_{\mat{Q}_N},
+  &+\norm{\vect{e}_q(\vect{q}_k)}^2_{\mat{Q}_a}
+  +\norm{\vect{u}_k-\vect{u}_k^0}^2_{\mat{R}_u}\Big)
+  +\norm{\vect{e}_N}^2_{\mat{Q}_N},
 \label{eq:nmpc-cost}
 \end{align}\DIFaddend 
 where $\vect{p}^{\text{ref}}$ and $\vect{v}^{\text{ref}}$ are the reference
@@ -1370,8 +1376,10 @@ at \mbox{%DIFAUXCMD
 is comparable to the run-to-run spread ($\pm0.02$). }\DIFaddend A moving-horizon
 estimator matches the EKF on these and does not improve them, confirming that the
 force needs no special estimator beyond the accelerometer residual.
-\DIFdelbegin \DIFdel{Fig.}\DIFdelend \DIFaddbegin \DIFadd{Figure}\DIFaddend ~\ref{fig:dhat} shows the estimate tracking the disturbance in the time
-domain on all three axes.
+\DIFdelbegin \DIFdel{Fig.~\ref{fig:dhat} shows the estimate tracking }\DIFdelend \DIFaddbegin \DIFadd{The estimate tracks }\DIFaddend the disturbance in the time domain on all three axes\DIFdelbegin \DIFdel{.
+}\DIFdelend \DIFaddbegin \DIFadd{, as
+Fig.~\ref{fig:dhat} shows.
+}\DIFaddend 
 
 The reading itself is the translational analogue of a classical
 momentum/residual observer~\cite{tomic2017external,ruggiero2014impedance}, and we
@@ -1423,7 +1431,7 @@ limitation a higher-order force model would relax.
 \centering
 \includegraphics[width=\columnwidth]{figs/fig_calib.png}
 \caption{Calibration curve under a sinusoidal wind: estimated force against
-applied force for the (a) $x$, (b) $y$, and (c) $z$ axes, with the linear fit
+applied force for, from top to bottom, the $x$, $y$, and $z$ axes, with the linear fit
 (slopes \num{0.98}, \num{0.97}, \num{0.96}; $R^2$ \num{0.90}, \num{0.89},
 \num{0.87}) and the ideal unit slope.}
 \label{fig:calib}
@@ -1432,7 +1440,7 @@ applied force for the (a) $x$, (b) $y$, and (c) $z$ axes, with the linear fit
 
 \subsection{Mass identification and its hover limit}
 Given excitation and no confounding disturbance, the mass is identified
-accurately. \DIFdelbegin \DIFdel{Fig.}\DIFdelend \DIFaddbegin \DIFadd{Figure}\DIFaddend ~\ref{fig:massconv} shows the EKF converging from a deliberately
+accurately\DIFdelbegin \DIFdel{. }\DIFdelend \DIFaddbegin \DIFadd{: }\DIFaddend Fig.~\ref{fig:massconv} shows the EKF converging from a deliberately
 wrong prior (\SI{0.60}{\kilogram}, \SI{43}{\percent} low) to within
 \SI{0.6}{\percent} of the ground truth on a disturbance-free trajectory, with the
 estimated force correctly near zero. This is the identification result: the mass
@@ -1448,7 +1456,7 @@ to within \SI{0.6}{\percent} (disturbance-free trajectory).}
 \end{figure}
 
 Hover is where identification is hard, and it exposes the limit of the ungated
-filter. \DIFdelbegin \DIFdel{Fig.}\DIFdelend \DIFaddbegin \DIFadd{Figure}\DIFaddend ~\ref{fig:mass} shows the plain EKF mass against speed under wind
+filter\DIFdelbegin \DIFdel{. }\DIFdelend \DIFaddbegin \DIFadd{: }\DIFaddend Fig.~\ref{fig:mass} shows the plain EKF mass against speed under wind
 \emph{without} the gate: in hover the estimate is biased by \SI{4.8}{\percent} and
 varies by $\pm\SI{35}{\gram}$ across the $N=9$ runs, because the vertical force is
 misread as a mass change (Proposition~\ref{prop:hover}); under excitation the bias
@@ -1475,12 +1483,12 @@ speed, $N{=}9$ in hover; mean $\pm$ std).}
 \DIFaddend 
 
 \subsection{The mass gate protects the estimate}
-\DIFdelbegin \DIFdel{Fig.}\DIFdelend \DIFaddbegin \DIFadd{Figure}\DIFaddend ~\ref{fig:trans} flies an aggressive trajectory followed by a hover, both
+\DIFaddbegin \DIFadd{The experiment of }\DIFaddend Fig.~\ref{fig:trans} flies an aggressive trajectory followed by a hover, both
 under wind, over five runs with independent noise and wind. During the trajectory
 both filters identify the mass. In the hover that follows, the plain EKF is blind
 to the lost \DIFdelbegin \DIFdel{observability }\DIFdelend \DIFaddbegin \DIFadd{identifiability }\DIFaddend and attributes the vertical wind to a mass change; its
 drift is more pronounced here than in the steady-hover battery of
-\DIFdelbegin \DIFdel{Fig.}\DIFdelend \DIFaddbegin \DIFadd{Figure}\DIFaddend ~\ref{fig:mass} (\SI{4.8}{\percent}), because the maneuver leaves the filter
+Fig.~\ref{fig:mass} (\SI{4.8}{\percent}), because the maneuver leaves the filter
 with an inflated mass covariance, so the wind moves the estimate by
 \SI{\driftPlain}{\percent} over the transition ($7.0\pm0.6$, $N{=}5$). The
 \DIFdelbegin \DIFdel{observability-aware }\DIFdelend \DIFaddbegin \DIFadd{identifiability-aware }\DIFaddend filter detects $\tilde\sigma$ falling below
@@ -1518,7 +1526,7 @@ std); hover shaded, $\tilde\sigma$ and threshold at the bottom.}
 %DIFDELCMD < %%%
 \DIFdelend \DIFaddbegin \subsection{Active excitation recovers an unidentifiable mass}
 \DIFaddend When the mass is unknown and the vehicle must hover, no passive estimator can
-recover it. \DIFdelbegin \DIFdel{Fig.}\DIFdelend \DIFaddbegin \DIFadd{Figure}\DIFaddend ~\ref{fig:active} starts from a deliberately wrong prior
+recover it. \DIFaddbegin \DIFadd{The run of }\DIFaddend Fig.~\ref{fig:active} starts from a deliberately wrong prior
 (\SI{0.70}{\kilogram}) in \DIFdelbegin \DIFdel{hover}\DIFdelend \DIFaddbegin \DIFadd{a wind-free hover, the same conditions for the passive
 and the active filter}\DIFaddend . The passive filter stays frozen at the prior,
 since hover provides no information (the passive estimate stays at
@@ -1540,19 +1548,18 @@ most informative probe \DIFdelbegin \DIFdel{(}\DIFdelend \DIFaddbegin \DIFadd{of
 \SI{3}{\percent} }\hskip0pt%DIFAUXCMD
 ($2.5\pm1.6$}\DIFdelend \DIFaddbegin \DIFadd{below \mbox{%DIFAUXCMD
 \SI{1}{\percent} }\hskip0pt%DIFAUXCMD
-($0.4\pm0.2$}\DIFaddend , $N{=}5$)\DIFdelbegin \DIFdel{; the recovery }\DIFdelend \DIFaddbegin \DIFadd{, the same
-accuracy the filter reaches on the disturbance-free trajectory of
-Figure~\ref{fig:massconv} (\mbox{%DIFAUXCMD
+($0.4\pm0.2$}\DIFaddend , $N{=}5$)\DIFdelbegin \DIFdel{; the recovery depends on the probe shape, which the next experiment
+optimizes. By contrast, under a }\DIFdelend \DIFaddbegin \DIFadd{, the same
+accuracy the filter reaches on the }\DIFaddend disturbance-free \DIFdelbegin \DIFdel{trajectory the same
+filter
+identifies the mass to within \mbox{%DIFAUXCMD
+\SI{0.6}{\percent} }\hskip0pt%DIFAUXCMD
+(}\DIFdelend \DIFaddbegin \DIFadd{trajectory of
+}\DIFaddend Fig.~\ref{fig:massconv} \DIFdelbegin \DIFdel{); the residual here is the price of identifying in hover from a wrong prior. }\DIFdelend \DIFaddbegin \DIFadd{(\mbox{%DIFAUXCMD
 \SI{0.6}{\percent}}\hskip0pt%DIFAUXCMD
 ): fifteen seconds of probe bring
 the estimate to the accuracy the trajectory gives. How fast the recovery proceeds
-}\DIFaddend depends on the probe shape, which the next experiment \DIFdelbegin \DIFdel{optimizes.
-By contrast, under a disturbance-free trajectory the same filter
-identifies the mass to within \mbox{%DIFAUXCMD
-\SI{0.6}{\percent} }\hskip0pt%DIFAUXCMD
-(Fig.~\ref{fig:massconv}); the
-residual here is the price of identifying in hover from a wrong prior.
-}\DIFdelend \DIFaddbegin \DIFadd{examines.
+depends on the probe shape, which the next experiment examines.
 }\DIFaddend 
 
 \DIFdelbegin %DIFDELCMD < \begin{figure}[t]
@@ -1567,10 +1574,12 @@ residual here is the price of identifying in hover from a wrong prior.
 \DIFdelend \DIFaddbegin \begin{figure}[!t]\color{blue}
 \centering
 \includegraphics[width=\columnwidth]{figs/fig_active.png}
-\caption{Mass recovery from a wrong hover prior (\SI{0.70}{\kilogram}; wind-free
-hover; $N{=}5$, mean $\pm$ std): the probe (shaded) lifts $\tilde\sigma$, recovers
-the mass, and is withdrawn after \SI{15}{\second} of gate-open time; the estimate
-is then held for the rest of the hover.}
+\caption{Mass recovery from a wrong prior (\SI{0.70}{\kilogram}) in wind-free
+hover ($N{=}5$, mean $\pm$ std): the probe (shaded) lifts $\tilde\sigma$ and
+recovers the mass, is withdrawn after \SI{15}{\second} of gate-open time, and the
+estimate holds for the rest of the hover. Unlike the excited trajectory of
+Fig.~\ref{fig:massconv}, hover provides no information: the passive filter stays
+at the prior.}
 \label{fig:active}
 \end{figure}
 \DIFaddend 
@@ -1657,8 +1666,8 @@ feedforward against the baseline rejects the null at each operating point
 ($p<0.01$, $n=5$ per condition; $p=0.008$ for the $n=4$ hover case), with a large
 pooled effect size (Cohen's $d=5.7$). The estimator
 and controller each run at \SI{100}{\hertz} with a per-step time below
-\SI{1}{\milli\second} \DIFdelbegin \DIFdel{. Fig.}\DIFdelend \DIFaddbegin \DIFadd{on the laptop-class processor of Section~\ref{sec:nmpc}. Figure}\DIFaddend ~\ref{fig:traj} shows the spatial effect on the
-figure-eight: with the feedforward the vehicle stays on the reference, while
+\SI{1}{\milli\second} \DIFdelbegin \DIFdel{. Fig.~\ref{fig:traj} shows the }\DIFdelend \DIFaddbegin \DIFadd{on the laptop-class processor of Section~\ref{sec:nmpc}. The }\DIFaddend spatial effect on the figure-eight \DIFaddbegin \DIFadd{is shown in
+Fig.~\ref{fig:traj}}\DIFaddend : with the feedforward the vehicle stays on the reference, while
 without it the wind pushes it off the path.
 
 \begin{figure}[t]
@@ -1804,7 +1813,7 @@ axis).}
 \DIFaddbegin \subsection{Fisher information, threshold, and gate sensitivity}\label{sec:sens}
 \DIFadd{Proposition~\ref{prop:crb} bounds the variance of the mass estimate; we check it
 against the spread actually observed and then examine how sensitive the gate is
-to its parameters. Figure~\ref{fig:fisher}(a) plots, against speed, the across-run
+to its parameters. To this end, Fig.~\ref{fig:fisher}(a) plots, against speed, the across-run
 standard deviation of the plain-EKF mass from Table~\ref{tab:id} together with
 the constant-force bound of Proposition~\ref{prop:crb} and the random-walk bound
 of \eqref{eq:sigeff}, both computed from the logged thrust and attitude with
@@ -2053,7 +2062,10 @@ leaves the gated error at
 (\mbox{%DIFAUXCMD
 \SIrange{1.9}{2.9}{\percent}}\hskip0pt%DIFAUXCMD
 ) because a noisier residual moves the mass less,
-so the margin narrows. }\emph{\DIFadd{Maneuver intensity}}\DIFadd{: at peak speeds of
+so the margin narrows; at \mbox{%DIFAUXCMD
+\SI{0.3}{\meter\per\square\second} }\hskip0pt%DIFAUXCMD
+the two are
+statistically indistinguishable ($2.5\pm1.1$ against $1.9\pm0.9$). }\emph{\DIFadd{Maneuver intensity}}\DIFadd{: at peak speeds of
 \mbox{%DIFAUXCMD
 \SIrange{5.9}{8.4}{\meter\per\second} }\hskip0pt%DIFAUXCMD
 the picture is unchanged
