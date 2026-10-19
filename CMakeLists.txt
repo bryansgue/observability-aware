@@ -18,7 +18,7 @@ find_package(nlohmann_json 3.2 REQUIRED)
 if(DEFINED ENV{ACADOS_SOURCE_DIR})
     set(ACADOS_DIR $ENV{ACADOS_SOURCE_DIR})
 else()
-    set(ACADOS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../acados")
+    set(ACADOS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../terceros/acados")
 endif()
 message(STATUS "ACADOS_DIR = ${ACADOS_DIR}")
 
