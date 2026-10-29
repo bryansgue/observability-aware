@@ -51,7 +51,7 @@ CONFIGS=(
 # a fresh launch would pick the current (post-06-28) plugin, whose IMU differs.
 sim_check() {
   pgrep -x headless_runner >/dev/null || { echo "[batch_sens] simulator DOWN — abort (relaunch June-plugin runner manually)"; exit 1; }
-  timeout 6 ros2 topic echo /quadrotor/odom --once >/dev/null 2>&1 || { echo "[batch_sens] odom silent — abort"; exit 1; }
+  timeout --foreground 6 ros2 topic echo /quadrotor/odom --once >/dev/null 2>&1 || { echo "[batch_sens] odom silent — abort"; exit 1; }
 }
 sim_check
 

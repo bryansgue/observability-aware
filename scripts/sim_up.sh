@@ -24,7 +24,7 @@ PGID_FILE=/tmp/sim_up_${QUAD}.pgid
 sim_alive()  { pgrep -x headless_runner >/dev/null 2>&1; }      # exact: real sim only
 odom_alive() {                                                  # retry: discovery is slow
   for _t in 1 2 3 4 5; do
-    timeout 4 ros2 topic echo "/$QUAD/odom" --once >/dev/null 2>&1 && return 0
+    timeout --foreground 4 ros2 topic echo "/$QUAD/odom" --once >/dev/null 2>&1 && return 0
     sleep 1
   done
   return 1
